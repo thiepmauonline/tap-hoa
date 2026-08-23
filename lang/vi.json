@@ -1,0 +1,21 @@
+{
+    "Dashboard": "Bảng điều khiển",
+    "Login": "Đăng nhập",
+    "Register": "Đăng ký",
+    "Logout": "Đăng xuất",
+    "Home": "Trang chủ",
+    "Save": "Lưu",
+    "Cancel": "Hủy",
+    "Delete": "Xóa",
+    "Edit": "Sửa",
+    "View": "Xem",
+    "Search": "Tìm kiếm",
+    "Actions": "Hành động",
+    "Status": "Trạng thái",
+    "Created At": "Thời gian tạo",
+    "Updated At": "Thời gian cập nhật",
+    "Success": "Thành công",
+    "Error": "Lỗi",
+    "Warning": "Cảnh báo",
+    "Info": "Thông tin"
+}
