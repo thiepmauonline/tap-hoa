@@ -19,11 +19,13 @@ class User extends Authenticatable
         'password',
         'role',
         'status',
+        'api_token',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'api_token',
     ];
 
     protected function casts(): array

@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Order;
 use App\Models\Product;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Component
 {
@@ -47,19 +48,19 @@ class Dashboard extends Component
             ->get();
 
         // Dữ liệu Biểu đồ Doanh thu 7 ngày gần nhất (Chart.js)
+        $revenueByDate = Order::where('store_id', $storeId)
+            ->where('status', 'completed')
+            ->whereBetween('order_date', [Carbon::today()->subDays(6)->startOfDay(), Carbon::today()->endOfDay()])
+            ->selectRaw('DATE(order_date) as sale_date, SUM(total_amount) as revenue')
+            ->groupBy(DB::raw('DATE(order_date)'))
+            ->pluck('revenue', 'sale_date');
+
         $chartLabels = [];
         $chartValues = [];
-
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
             $chartLabels[] = $date->format('d/m');
-
-            $dailyRevenue = Order::where('store_id', $storeId)
-                ->whereDate('order_date', $date)
-                ->where('status', 'completed')
-                ->sum('total_amount');
-
-            $chartValues[] = (float) $dailyRevenue;
+            $chartValues[] = (float) ($revenueByDate[$date->toDateString()] ?? 0);
         }
 
         return view('livewire.dashboard', [

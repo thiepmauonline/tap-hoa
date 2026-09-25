@@ -64,6 +64,30 @@
         @endif
     </div>
 
+    <div class="card card-custom mt-4">
+        <div class="card-header bg-white fw-bold">Biến động kho gần đây</div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th class="ps-3">Thời gian</th><th>Sản phẩm</th><th>Loại</th><th class="text-end">Thay đổi</th><th class="text-end">Trước → Sau</th><th>Người thực hiện</th><th class="pe-3">Ghi chú</th></tr></thead>
+                <tbody>
+                    @forelse($movements as $movement)
+                        <tr>
+                            <td class="ps-3 text-nowrap">{{ $movement->created_at->format('H:i d/m/Y') }}</td>
+                            <td class="fw-semibold">{{ $movement->product->name ?? 'Sản phẩm đã xóa' }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ ['purchase'=>'Nhập hàng','sale'=>'Bán hàng','adjustment'=>'Điều chỉnh','initial'=>'Khởi tạo'][$movement->type] ?? $movement->type }}</span></td>
+                            <td class="text-end fw-bold {{ $movement->quantity_change >= 0 ? 'text-success' : 'text-danger' }}">{{ $movement->quantity_change >= 0 ? '+' : '' }}{{ number_format($movement->quantity_change) }}</td>
+                            <td class="text-end">{{ number_format($movement->quantity_before) }} → {{ number_format($movement->quantity_after) }}</td>
+                            <td>{{ $movement->user->name ?? 'Hệ thống' }}</td>
+                            <td class="pe-3">{{ $movement->note ?: '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7" class="text-center text-muted py-4">Chưa có biến động kho mới.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     @if($isModalOpen)
     <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-dialog-centered">
@@ -80,6 +104,12 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Số lượng thực tế trong kho mới:</label>
                         <input type="number" wire:model="quantity" class="form-control form-control-lg fw-bold text-center">
+                        @error('quantity') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lý do điều chỉnh <span class="text-danger">*</span></label>
+                        <textarea wire:model="adjustmentReason" class="form-control" rows="2" placeholder="Ví dụ: Kiểm kê thực tế, hàng hư hỏng..."></textarea>
+                        @error('adjustmentReason') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div class="text-end pt-3 border-top">
                         <button wire:click="$set('isModalOpen', false)" type="button" class="btn btn-secondary me-2">Hủy</button>

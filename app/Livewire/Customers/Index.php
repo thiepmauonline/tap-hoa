@@ -10,7 +10,6 @@ class Index extends Component
     public string $name = '';
     public string $phone = '';
     public string $address = '';
-    public int $point = 0;
     public ?int $customerId = null;
     public bool $isModalOpen = false;
 
@@ -32,7 +31,6 @@ class Index extends Component
         $this->name = '';
         $this->phone = '';
         $this->address = '';
-        $this->point = 0;
     }
 
     public function edit(int $id)
@@ -42,7 +40,6 @@ class Index extends Component
         $this->name = $c->name;
         $this->phone = $c->phone ?? '';
         $this->address = $c->address ?? '';
-        $this->point = $c->point;
         $this->isModalOpen = true;
     }
 
@@ -56,7 +53,6 @@ class Index extends Component
                 'name' => $this->name,
                 'phone' => $this->phone,
                 'address' => $this->address,
-                'point' => $this->point,
             ]);
             session()->flash('success', 'Đã cập nhật thông tin khách hàng!');
         } else {
@@ -65,7 +61,7 @@ class Index extends Component
                 'name' => $this->name,
                 'phone' => $this->phone,
                 'address' => $this->address,
-                'point' => $this->point,
+                'point' => 0,
             ]);
             session()->flash('success', 'Thêm khách hàng mới thành công!');
         }
@@ -75,7 +71,12 @@ class Index extends Component
 
     public function delete(int $id)
     {
-        Customer::where('store_id', auth()->user()->store_id)->where('id', $id)->delete();
+        $customer = Customer::where('store_id', auth()->user()->store_id)->findOrFail($id);
+        if ($customer->orders()->exists()) {
+            session()->flash('error', 'Không thể xóa khách hàng đã có lịch sử mua hàng.');
+            return;
+        }
+        $customer->delete();
         session()->flash('success', 'Đã xóa khách hàng!');
     }
 

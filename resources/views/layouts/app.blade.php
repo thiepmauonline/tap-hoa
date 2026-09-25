@@ -158,11 +158,17 @@
             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển
             </a>
+            @if(auth()->user()->isManager())
+            <a href="{{ route('reports.business') }}" class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                <i class="bi bi-bar-chart-line-fill"></i> Báo cáo kinh doanh
+            </a>
+            @endif
             <a href="{{ route('pos') }}" class="nav-link bg-success text-white my-2 fw-bold shadow-sm" target="_blank">
                 <i class="bi bi-calculator-fill"></i> Bán hàng POS (Mở quầy)
             </a>
 
             <div class="nav-heading">Quản lý kho & Nhập bán</div>
+            @if(auth()->user()->isManager())
             <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
                 <i class="bi bi-box-seam"></i> Sản phẩm
             </a>
@@ -177,12 +183,15 @@
             </a>
 
             <div class="nav-heading">Đối tác & Đơn bán</div>
+            @endif
             <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
                 <i class="bi bi-receipt"></i> Hóa đơn đã bán
             </a>
+            @if(auth()->user()->isManager())
             <a href="{{ route('suppliers.index') }}" class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
                 <i class="bi bi-truck"></i> Nhà cung cấp
             </a>
+            @endif
             <a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
                 <i class="bi bi-people"></i> Khách hàng tích điểm
             </a>

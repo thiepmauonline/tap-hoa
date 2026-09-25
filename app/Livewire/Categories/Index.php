@@ -66,7 +66,12 @@ class Index extends Component
 
     public function delete(int $id)
     {
-        Category::where('store_id', auth()->user()->store_id)->where('id', $id)->delete();
+        $category = Category::where('store_id', auth()->user()->store_id)->findOrFail($id);
+        if ($category->products()->exists()) {
+            session()->flash('error', 'Không thể xóa danh mục đang có sản phẩm.');
+            return;
+        }
+        $category->delete();
         session()->flash('success', 'Đã xóa danh mục!');
     }
 

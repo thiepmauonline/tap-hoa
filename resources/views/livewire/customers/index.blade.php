@@ -58,10 +58,6 @@
                                 <label class="form-label fw-semibold">Số điện thoại</label>
                                 <input type="text" wire:model="phone" class="form-control" placeholder="0901111222">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Điểm tích lũy ban đầu</label>
-                                <input type="number" wire:model="point" class="form-control" placeholder="0">
-                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Địa chỉ</label>

@@ -20,7 +20,13 @@
                 <tbody>
                     @forelse($orders as $po)
                         <tr>
-                            <td class="ps-3 fw-bold text-primary">{{ $po->po_code }}</td>
+                            <td class="ps-3 fw-bold">
+                                <a href="{{ route('purchase-orders.show', $po->id) }}"
+                                   class="text-primary text-decoration-none"
+                                   title="Xem chi tiết phiếu {{ $po->po_code }}">
+                                    {{ $po->po_code }}
+                                </a>
+                            </td>
                             <td>{{ $po->purchase_date->format('H:i d/m/Y') }}</td>
                             <td class="fw-semibold text-dark">{{ $po->supplier->name ?? 'Khác' }}</td>
                             <td>{{ $po->user->name ?? 'User' }}</td>

@@ -12,10 +12,12 @@ use App\Livewire\Suppliers\Index as SupplierIndex;
 use App\Livewire\Customers\Index as CustomerIndex;
 use App\Livewire\PurchaseOrders\Index as PurchaseOrderIndex;
 use App\Livewire\PurchaseOrders\Create as PurchaseOrderCreate;
+use App\Livewire\PurchaseOrders\Show as PurchaseOrderShow;
 use App\Livewire\Orders\Index as OrderIndex;
 use App\Livewire\Users\Index as UserIndex;
 use App\Livewire\Pos\Cashier;
 use App\Livewire\Ai\Assistant as AiAssistant;
+use App\Livewire\Reports\Business as BusinessReport;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,7 +40,7 @@ Route::post('/logout', function () {
 })->name('logout');
 
 // Authenticated Store Routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'account.active'])->group(function () {
     Route::get('/', function () {
         return redirect()->route('dashboard');
     });
@@ -46,18 +48,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/pos', Cashier::class)->name('pos');
 
-    Route::get('/products', ProductIndex::class)->name('products.index');
-    Route::get('/categories', CategoryIndex::class)->name('categories.index');
-    Route::get('/inventories', InventoryIndex::class)->name('inventories.index');
-
-    Route::get('/suppliers', SupplierIndex::class)->name('suppliers.index');
     Route::get('/customers', CustomerIndex::class)->name('customers.index');
-
-    Route::get('/purchase-orders', PurchaseOrderIndex::class)->name('purchase-orders.index');
-    Route::get('/purchase-orders/create', PurchaseOrderCreate::class)->name('purchase-orders.create');
-
     Route::get('/orders', OrderIndex::class)->name('orders.index');
-    Route::get('/users', UserIndex::class)->name('users.index');
-
     Route::get('/ai-assistant', AiAssistant::class)->name('ai.assistant');
+
+    Route::middleware('role:owner,manager')->group(function () {
+        Route::get('/reports/business', BusinessReport::class)->name('reports.business');
+        Route::get('/products', ProductIndex::class)->name('products.index');
+        Route::get('/categories', CategoryIndex::class)->name('categories.index');
+        Route::get('/inventories', InventoryIndex::class)->name('inventories.index');
+        Route::get('/suppliers', SupplierIndex::class)->name('suppliers.index');
+        Route::get('/purchase-orders', PurchaseOrderIndex::class)->name('purchase-orders.index');
+        Route::get('/purchase-orders/create', PurchaseOrderCreate::class)->name('purchase-orders.create');
+        Route::get('/purchase-orders/{purchaseOrder}', PurchaseOrderShow::class)
+            ->whereNumber('purchaseOrder')
+            ->name('purchase-orders.show');
+    });
+
+    Route::get('/users', UserIndex::class)->middleware('role:owner')->name('users.index');
 });

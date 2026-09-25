@@ -27,6 +27,15 @@ class Login extends Component
         $this->validate();
 
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+            $user = Auth::user();
+            $store = $user->store;
+
+            if (! $user->status || ! $store || ! $store->status || ($store->expired_at && $store->expired_at->isPast())) {
+                Auth::logout();
+                $this->addError('email', 'Tài khoản hoặc cửa hàng đã bị khóa hay hết hạn sử dụng.');
+                return;
+            }
+
             session()->regenerate();
             return redirect()->intended(route('dashboard'));
         }

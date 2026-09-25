@@ -122,13 +122,39 @@
             <!-- Chọn Khách hàng -->
             <div class="mb-2">
                 <label class="form-label fs-8 text-muted mb-1">Khách hàng tích điểm</label>
-                <select wire:model="selectedCustomerId" class="form-select form-select-sm">
+                <select wire:model.live="selectedCustomerId" class="form-select form-select-sm">
                     <option value="">-- Khách lẻ (Không tích điểm) --</option>
                     @foreach($customers as $cust)
                         <option value="{{ $cust->id }}">{{ $cust->name }} - SĐT: {{ $cust->phone }} ({{ $cust->point }} điểm)</option>
                     @endforeach
                 </select>
             </div>
+
+            @if($selectedCustomer)
+                <div class="border rounded p-2 mb-2 bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold small">Điểm hiện có: <span class="text-primary">{{ number_format($selectedCustomer->point) }} điểm</span></div>
+                            <small class="text-muted">1 điểm = {{ number_format($pointValue, 0, ',', '.') }}đ giảm giá</small>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input wire:model.live="usePoints" class="form-check-input" type="checkbox" id="use_customer_points">
+                            <label class="form-check-label fw-semibold small" for="use_customer_points">Dùng điểm</label>
+                        </div>
+                    </div>
+
+                    @if($usePoints)
+                        <div class="input-group input-group-sm mt-2">
+                            <input type="number" min="1" max="{{ $maxRedeemablePoints }}" wire:model.live.debounce.300ms="pointsToRedeem" class="form-control" placeholder="Số điểm muốn dùng">
+                            <span class="input-group-text">/ {{ number_format($maxRedeemablePoints) }} điểm tối đa</span>
+                        </div>
+                        @error('pointsToRedeem') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        @if($pointsDiscountAmount > 0)
+                            <div class="d-flex justify-content-between small mt-1 text-success"><span>Giảm bằng điểm:</span><strong>-{{ number_format($pointsDiscountAmount, 0, ',', '.') }} đ</strong></div>
+                        @endif
+                    @endif
+                </div>
+            @endif
 
             <!-- Tóm tắt số tiền -->
             <div class="d-flex justify-content-between fs-7 mb-1 text-muted">
@@ -139,6 +165,14 @@
                 <span>Giảm giá:</span>
                 <input type="number" wire:model.live="discount" class="form-control form-control-sm text-end fw-bold text-danger ms-2" style="width: 110px;" placeholder="0">
             </div>
+            @error('discount') <div class="text-danger small text-end mb-2">{{ $message }}</div> @enderror
+
+            @if($pointsDiscountAmount > 0)
+                <div class="d-flex justify-content-between fs-7 mb-2 text-success">
+                    <span>Giảm bằng {{ number_format($pointsToRedeem) }} điểm:</span>
+                    <strong>-{{ number_format($pointsDiscountAmount, 0, ',', '.') }} đ</strong>
+                </div>
+            @endif
 
             <div class="d-flex justify-content-between align-items-center py-2 border-top border-bottom my-2">
                 <span class="fw-bold fs-6 text-dark">TỔNG KHÁCH TRẢ:</span>
@@ -150,6 +184,7 @@
                 <div class="col-6">
                     <label class="form-label fs-8 text-muted mb-1">Tiền khách đưa</label>
                     <input type="number" wire:model.live="paidAmount" class="form-control form-control-lg fw-bold text-success" placeholder="0">
+                    @error('paidAmount') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-6">
                     <label class="form-label fs-8 text-muted mb-1">Tiền thừa trả lại</label>
@@ -166,9 +201,15 @@
                 <label class="btn btn-outline-primary btn-sm" for="pm_qr"><i class="bi bi-qr-code"></i> Quét QR</label>
             </div>
 
-            <button wire:click="checkout" class="btn btn-success btn-lg w-100 fw-bold py-2 shadow" {{ empty($cart) ? 'disabled' : '' }}>
+            @if($errors->any())
+                <div class="alert alert-danger py-2 px-3 mb-2 small">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $errors->first() }}
+                </div>
+            @endif
+
+            <button type="button" wire:click="checkout" wire:loading.attr="disabled" wire:target="checkout" class="btn btn-success btn-lg w-100 fw-bold py-2 shadow" {{ empty($cart) ? 'disabled' : '' }}>
                 <span wire:loading.remove wire:target="checkout"><i class="bi bi-printer-fill me-1"></i> THANH TOÁN & IN HÓA ĐƠN</span>
-                <span wire:loading wire:target="checkout"><span class="spinner-border spinner-border-sm me-1"></i> Đang xử lý...</span>
+                <span wire:loading wire:target="checkout"><span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...</span>
             </button>
         </div>
     </div>
@@ -199,15 +240,70 @@
                             <span>Tiền thừa trả lại:</span>
                             <strong class="text-primary">{{ number_format($lastCompletedOrder->change_amount, 0, ',', '.') }} đ</strong>
                         </div>
+                        @if($lastCompletedOrder->customer)
+                            <hr class="my-2">
+                            @if($lastCompletedOrder->points_redeemed > 0)
+                                <div class="d-flex justify-content-between mb-1"><span>Điểm đã dùng:</span><strong>-{{ number_format($lastCompletedOrder->points_redeemed) }} điểm</strong></div>
+                            @endif
+                            <div class="d-flex justify-content-between mb-1"><span>Điểm vừa tích:</span><strong class="text-success">+{{ number_format($lastCompletedOrder->points_earned) }} điểm</strong></div>
+                            <div class="d-flex justify-content-between"><span>Điểm hiện có:</span><strong>{{ number_format($lastCompletedOrder->customer->point) }} điểm</strong></div>
+                        @endif
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button onclick="window.print()" class="btn btn-primary flex-grow-1"><i class="bi bi-printer me-1"></i> In hóa đơn</button>
+                        <button type="button" onclick="printPosReceipt()" class="btn btn-primary flex-grow-1"><i class="bi bi-printer me-1"></i> In hóa đơn</button>
                         <button wire:click="closeSuccessModal" class="btn btn-secondary px-4">Đóng</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <section id="print-receipt" aria-hidden="true">
+        <div class="receipt-title">{{ auth()->user()->store->name }}</div>
+        @if(auth()->user()->store->address)
+            <div class="receipt-center">{{ auth()->user()->store->address }}</div>
+        @endif
+        @if(auth()->user()->store->phone)
+            <div class="receipt-center">ĐT: {{ auth()->user()->store->phone }}</div>
+        @endif
+        <div class="receipt-line"></div>
+        <div class="receipt-center" style="font-size:14px;font-weight:700">HÓA ĐƠN BÁN HÀNG</div>
+        <div class="receipt-center">{{ $lastCompletedOrder->order_code }}</div>
+        <div class="receipt-row"><span>Ngày:</span><span>{{ $lastCompletedOrder->order_date->format('H:i d/m/Y') }}</span></div>
+        <div class="receipt-row"><span>Thu ngân:</span><span>{{ $lastCompletedOrder->user->name ?? auth()->user()->name }}</span></div>
+        <div class="receipt-row"><span>Khách hàng:</span><span>{{ $lastCompletedOrder->customer->name ?? 'Khách lẻ' }}</span></div>
+        <div class="receipt-line"></div>
+
+        @foreach($lastCompletedOrder->items as $item)
+            <div class="receipt-item">
+                <div>{{ $item->product->name ?? 'Sản phẩm' }}</div>
+                <div class="receipt-row">
+                    <span>{{ number_format($item->quantity) }} {{ $item->product->unit ?? '' }} × {{ number_format($item->price, 0, ',', '.') }}</span>
+                    <strong>{{ number_format($item->subtotal, 0, ',', '.') }}</strong>
+                </div>
+            </div>
+        @endforeach
+
+        <div class="receipt-line"></div>
+        <div class="receipt-row"><span>Tạm tính:</span><span>{{ number_format($lastCompletedOrder->subtotal_amount, 0, ',', '.') }} đ</span></div>
+        @if((float) $lastCompletedOrder->manual_discount_amount > 0)
+            <div class="receipt-row"><span>Giảm giá:</span><span>-{{ number_format($lastCompletedOrder->manual_discount_amount, 0, ',', '.') }} đ</span></div>
+        @endif
+        @if((int) $lastCompletedOrder->points_redeemed > 0)
+            <div class="receipt-row"><span>Dùng {{ number_format($lastCompletedOrder->points_redeemed) }} điểm:</span><span>-{{ number_format($lastCompletedOrder->points_discount_amount, 0, ',', '.') }} đ</span></div>
+        @endif
+        <div class="receipt-row receipt-total"><span>TỔNG CỘNG:</span><span>{{ number_format($lastCompletedOrder->total_amount, 0, ',', '.') }} đ</span></div>
+        <div class="receipt-row"><span>Khách đưa:</span><span>{{ number_format($lastCompletedOrder->paid_amount, 0, ',', '.') }} đ</span></div>
+        <div class="receipt-row"><span>Tiền thừa:</span><span>{{ number_format($lastCompletedOrder->change_amount, 0, ',', '.') }} đ</span></div>
+        <div class="receipt-row"><span>Thanh toán:</span><span>{{ ['cash' => 'Tiền mặt', 'transfer' => 'Chuyển khoản', 'qr' => 'Quét QR'][$lastCompletedOrder->payment_method] ?? $lastCompletedOrder->payment_method }}</span></div>
+        @if($lastCompletedOrder->customer)
+            <div class="receipt-line"></div>
+            <div class="receipt-row"><span>Điểm vừa tích:</span><span>+{{ number_format($lastCompletedOrder->points_earned) }}</span></div>
+            <div class="receipt-row"><span>Điểm hiện có:</span><span>{{ number_format($lastCompletedOrder->customer->point) }}</span></div>
+        @endif
+        <div class="receipt-line"></div>
+        <div class="receipt-center">Cảm ơn quý khách và hẹn gặp lại!</div>
+    </section>
     @endif
 </div>

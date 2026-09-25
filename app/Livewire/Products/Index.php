@@ -8,6 +8,12 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\Inventory;
+use App\Models\OrderItem;
+use App\Models\PurchaseOrderItem;
+use App\Models\InventoryMovement;
+use App\Services\InventoryService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class Index extends Component
 {
@@ -35,9 +41,9 @@ class Index extends Component
     {
         return [
             'name' => 'required|string|max:255',
-            'category_id' => 'nullable|integer',
-            'supplier_id' => 'nullable|integer',
-            'barcode' => 'nullable|string|max:100',
+            'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('store_id', auth()->user()->store_id)],
+            'supplier_id' => ['nullable', 'integer', Rule::exists('suppliers', 'id')->where('store_id', auth()->user()->store_id)],
+            'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->where('store_id', auth()->user()->store_id)->ignore($this->productId)],
             'unit' => 'required|string|max:50',
             'cost_price' => 'required|numeric|min:0',
             'sale_price' => 'required|numeric|min:0',
@@ -110,10 +116,21 @@ class Index extends Component
             ]);
 
             // Cập nhật tồn kho
-            Inventory::updateOrCreate(
+            $inventory = Inventory::firstOrCreate(
                 ['store_id' => $storeId, 'product_id' => $product->id],
-                ['quantity' => $this->initial_stock]
+                ['quantity' => 0]
             );
+            $change = $this->initial_stock - (int) $inventory->quantity;
+            if ($change !== 0) {
+                DB::transaction(fn () => app(InventoryService::class)->adjust(
+                    (int) $storeId,
+                    (int) $product->id,
+                    $change,
+                    'adjustment',
+                    auth()->id(),
+                    note: 'Điều chỉnh tồn kho từ màn hình sản phẩm',
+                ));
+            }
 
             session()->flash('success', 'Cập nhật sản phẩm thành công!');
         } else {
@@ -131,12 +148,14 @@ class Index extends Component
             ]);
 
             // Tạo tồn kho ban đầu
-            Inventory::create([
-                'store_id' => $storeId,
-                'product_id' => $product->id,
-                'quantity' => $this->initial_stock,
-                'last_imported_at' => now(),
-            ]);
+            DB::transaction(fn () => app(InventoryService::class)->adjust(
+                (int) $storeId,
+                (int) $product->id,
+                $this->initial_stock,
+                'initial',
+                auth()->id(),
+                note: 'Tồn kho ban đầu khi tạo sản phẩm',
+            ));
 
             session()->flash('success', 'Thêm sản phẩm mới thành công!');
         }
@@ -147,7 +166,15 @@ class Index extends Component
     public function delete(int $id)
     {
         $product = Product::where('store_id', auth()->user()->store_id)->findOrFail($id);
-        Inventory::where('product_id', $id)->delete();
+
+        if (OrderItem::where('product_id', $id)->exists() || PurchaseOrderItem::where('product_id', $id)->exists()) {
+            $product->update(['status' => 0]);
+            session()->flash('success', 'Sản phẩm đã có lịch sử giao dịch nên được chuyển sang ngừng kinh doanh thay vì xóa.');
+            return;
+        }
+
+        InventoryMovement::where('store_id', auth()->user()->store_id)->where('product_id', $id)->delete();
+        Inventory::where('store_id', auth()->user()->store_id)->where('product_id', $id)->delete();
         $product->delete();
 
         session()->flash('success', 'Đã xóa sản phẩm khỏi hệ thống!');

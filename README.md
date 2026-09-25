@@ -1,59 +1,89 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Hệ thống quản lý cửa hàng tạp hóa SaaS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Ứng dụng Laravel 12 + Livewire 3 quản lý nhiều cửa hàng trên cùng nền tảng, với dữ liệu tách biệt theo `store_id`.
 
-## About Laravel
+## Chức năng
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Đăng ký cửa hàng, đăng nhập và kiểm tra trạng thái thuê bao.
+- Phân quyền `owner`, `manager`, `staff` ở middleware phía server.
+- Quản lý sản phẩm, danh mục, nhà cung cấp, khách hàng và nhân viên.
+- POS bán hàng, quét mã vạch, giảm giá, thanh toán, tích điểm và in hóa đơn.
+- Nhập hàng, cập nhật giá vốn, xem và in phiếu nhập.
+- Tồn kho, cảnh báo sắp hết và sổ biến động kho.
+- Báo cáo doanh thu, lợi nhuận gộp, top bán chạy và hàng tồn lâu.
+- REST API đọc sản phẩm, tồn kho và báo cáo, xác thực bằng bearer token.
+- Trợ lý phân tích nằm trong module riêng và sẽ được tích hợp API AI sau.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Phân quyền
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Chức năng | Owner | Manager | Staff |
+|---|---:|---:|---:|
+| POS, khách hàng, hóa đơn bán | Có | Có | Có |
+| Sản phẩm, kho, nhập hàng, nhà cung cấp | Có | Có | Không |
+| Báo cáo kinh doanh | Có | Có | Không |
+| Quản lý nhân viên | Có | Không | Không |
 
-## Learning Laravel
+Quyền được kiểm tra tại route/middleware; ẩn menu không được xem là cơ chế bảo mật.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Cài đặt
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Yêu cầu: PHP 8.2+, Composer, MySQL và Node.js.
 
-## Laravel Sponsors
+```bash
+composer install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm install
+npm run build
+php artisan serve
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Thiết lập kết nối MySQL trong `.env` trước khi migrate. Không commit `.env` hoặc API token.
 
-### Premium Partners
+## REST API
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Tạo hoặc thay token cho một tài khoản:
 
-## Contributing
+```bash
+php artisan api:issue-token owner@example.com
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Token chỉ hiển thị một lần; database chỉ lưu SHA-256 hash. Gửi token qua header:
 
-## Code of Conduct
+```http
+Authorization: Bearer YOUR_TOKEN
+Accept: application/json
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Endpoints:
 
-## Security Vulnerabilities
+- `GET /api/v1/products?search=&low_stock=1&per_page=20`
+- `GET /api/v1/products/{id}`
+- `GET /api/v1/reports/summary?date_from=2026-08-01&date_to=2026-08-31`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Mọi endpoint tự lọc dữ liệu theo cửa hàng của token. Endpoint báo cáo chỉ dành cho owner/manager và được rate-limit.
 
-## License
+## Quy tắc tồn kho
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Nhập hàng, bán hàng và điều chỉnh kho chạy trong transaction.
+- Dòng tồn kho được khóa khi cập nhật để tránh bán âm khi nhiều thu ngân thao tác đồng thời.
+- Giá và sản phẩm được nạp lại từ server lúc thanh toán; không tin dữ liệu Livewire từ trình duyệt.
+- Mọi thay đổi kho mới được ghi vào `inventory_movements`, gồm số trước/sau, người thực hiện, loại và chứng từ nguồn.
+- Phiếu đã nhập kho không sửa trực tiếp để tránh sai lịch sử; khi mở rộng nên dùng nghiệp vụ hủy/điều chỉnh đảo kho.
+
+## Kiểm thử
+
+```bash
+php artisan test
+```
+
+Feature test dùng SQLite in-memory. Bật extension `pdo_sqlite` trên môi trường chạy test. Production vẫn dùng MySQL.
+
+## Triển khai production
+
+- Đặt `APP_ENV=production`, `APP_DEBUG=false` và cấu hình HTTPS.
+- Trỏ document root vào thư mục `public`.
+- Chạy `php artisan migrate --force`, `php artisan optimize` và `npm run build` trong quy trình deploy.
+- Dùng Supervisor/systemd cho `php artisan queue:work` khi bổ sung AI hoặc tác vụ nền.
+- Thiết lập backup MySQL, xoay vòng log, giám sát `/up` và không cấp quyền ghi rộng ngoài `storage`/`bootstrap/cache`.

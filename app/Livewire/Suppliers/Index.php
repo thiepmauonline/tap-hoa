@@ -80,7 +80,12 @@ class Index extends Component
 
     public function delete(int $id)
     {
-        Supplier::where('store_id', auth()->user()->store_id)->where('id', $id)->delete();
+        $supplier = Supplier::where('store_id', auth()->user()->store_id)->findOrFail($id);
+        if ($supplier->products()->exists() || $supplier->purchaseOrders()->exists()) {
+            session()->flash('error', 'Không thể xóa nhà cung cấp đã có sản phẩm hoặc phiếu nhập.');
+            return;
+        }
+        $supplier->delete();
         session()->flash('success', 'Đã xóa nhà cung cấp!');
     }
 

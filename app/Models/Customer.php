@@ -28,4 +28,9 @@ class Customer extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    public function pointTransactions(): HasMany
+    {
+        return $this->hasMany(CustomerPointTransaction::class);
+    }
 }
