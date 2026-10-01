@@ -56,6 +56,10 @@
                                     <div class="d-flex align-items-center gap-2">
                                         @if($p->image)
                                             <img src="{{ asset($p->image) }}" alt="{{ $p->name }}" class="rounded border object-fit-cover" style="width: 36px; height: 36px; flex-shrink: 0;">
+                                        @else
+                                            <div class="bg-light text-secondary rounded d-flex align-items-center justify-content-center border" style="width: 36px; height: 36px; flex-shrink: 0;">
+                                                <i class="bi bi-box-seam fs-7"></i>
+                                            </div>
                                         @endif
                                         <div>
                                             <div class="fw-bold text-dark">{{ $p->name }}</div>
@@ -110,6 +114,40 @@
                             <label class="form-label fw-semibold">Tên Sản phẩm <span class="text-danger">*</span></label>
                             <input type="text" wire:model="name" class="form-control @error('name') is-invalid @enderror" placeholder="Vd: Nước ngọt Coca-Cola 320ml">
                             @error('name') <div class="text-danger fs-7 mt-1">{{ $message }}</div> @enderror
+                        </div>
+
+                        <!-- Upload Hình ảnh sản phẩm -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Hình ảnh sản phẩm</label>
+                            <div class="d-flex align-items-center gap-3">
+                                @if ($image)
+                                    <div class="position-relative">
+                                        <img src="{{ $image->temporaryUrl() }}" class="rounded border object-fit-cover" style="width: 60px; height: 60px;">
+                                        <button type="button" wire:click="removeImage" class="btn btn-sm btn-danger position-absolute top-0 end-0 translate-middle p-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 20px; height: 20px;" title="Xóa ảnh">
+                                            <i class="bi bi-x" style="font-size: 0.8rem;"></i>
+                                        </button>
+                                    </div>
+                                @elseif ($currentImage)
+                                    <div class="position-relative">
+                                        <img src="{{ asset($currentImage) }}" class="rounded border object-fit-cover" style="width: 60px; height: 60px;">
+                                        <button type="button" wire:click="removeImage" class="btn btn-sm btn-danger position-absolute top-0 end-0 translate-middle p-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 20px; height: 20px;" title="Xóa ảnh">
+                                            <i class="bi bi-x" style="font-size: 0.8rem;"></i>
+                                        </button>
+                                    </div>
+                                @else
+                                    <div class="bg-light text-secondary rounded d-flex align-items-center justify-content-center border" style="width: 60px; height: 60px; flex-shrink: 0;">
+                                        <i class="bi bi-image fs-4"></i>
+                                    </div>
+                                @endif
+                                <div class="flex-grow-1">
+                                    <input type="file" wire:model="image" class="form-control fs-7 @error('image') is-invalid @enderror" accept="image/*">
+                                    <div wire:loading wire:target="image" class="text-primary fs-8 mt-1">
+                                        <span class="spinner-border spinner-border-sm me-1"></span> Đang tải ảnh...
+                                    </div>
+                                    @error('image') <div class="text-danger fs-8 mt-1">{{ $message }}</div> @enderror
+                                    <small class="text-muted d-block fs-8 mt-1">Định dạng JPG, PNG, WEBP (tối đa 2MB).</small>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row">

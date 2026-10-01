@@ -26,7 +26,7 @@
                         <th class="ps-3">Sản phẩm</th>
                         <th>Danh mục</th>
                         <th>Ngưỡng an toàn</th>
-                        <th>Số lượng tồn kho hiện tại</th>
+                        <th>Tồn kho</th>
                         <th>Ngày nhập gần nhất</th>
                         <th class="text-end pe-3">Điều chỉnh</th>
                     </tr>
@@ -43,9 +43,9 @@
                             <td><span class="badge bg-light text-dark border">{{ $p->min_stock ?? 5 }} {{ $p->unit ?? '' }}</span></td>
                             <td>
                                 @if($inv->quantity <= ($p->min_stock ?? 5))
-                                    <span class="badge bg-danger fs-6 px-3 py-2"><i class="bi bi-exclamation-triangle me-1"></i> {{ $inv->quantity }} {{ $p->unit ?? '' }} (Sắp hết)</span>
+                                    <span class="badge bg-danger fs-7 px-2.5 py-1"><i class="bi bi-exclamation-triangle me-1"></i> {{ $inv->quantity }} {{ $p->unit ?? '' }} (Sắp hết)</span>
                                 @else
-                                    <span class="badge bg-success fs-6 px-3 py-2">{{ $inv->quantity }} {{ $p->unit ?? '' }}</span>
+                                    <span class="badge bg-success fs-7 px-2.5 py-1">{{ $inv->quantity }} {{ $p->unit ?? '' }}</span>
                                 @endif
                             </td>
                             <td class="text-muted fs-7">{{ $inv->last_imported_at ? $inv->last_imported_at->format('d/m/Y H:i') : '--' }}</td>

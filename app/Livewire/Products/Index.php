@@ -4,6 +4,7 @@ namespace App\Livewire\Products;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Supplier;
@@ -17,7 +18,7 @@ use Illuminate\Validation\Rule;
 
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     protected string $paginationTheme = 'bootstrap';
 
@@ -36,6 +37,8 @@ class Index extends Component
     public $sale_price = 0;
     public int $min_stock = 5;
     public int $initial_stock = 0;
+    public $image = null;
+    public ?string $currentImage = null;
 
     protected function rules(): array
     {
@@ -49,6 +52,7 @@ class Index extends Component
             'sale_price' => 'required|numeric|min:0',
             'min_stock' => 'required|integer|min:0',
             'initial_stock' => 'nullable|integer|min:0',
+            'image' => 'nullable|image|max:2048',
         ];
     }
 
@@ -76,7 +80,15 @@ class Index extends Component
         $this->sale_price = 0;
         $this->min_stock = 5;
         $this->initial_stock = 0;
+        $this->image = null;
+        $this->currentImage = null;
         $this->resetValidation();
+    }
+
+    public function removeImage()
+    {
+        $this->image = null;
+        $this->currentImage = null;
     }
 
     public function edit(int $id)
@@ -93,6 +105,8 @@ class Index extends Component
         $this->sale_price = $product->sale_price;
         $this->min_stock = $product->min_stock;
         $this->initial_stock = $product->inventory->quantity ?? 0;
+        $this->currentImage = $product->image;
+        $this->image = null;
 
         $this->isModalOpen = true;
     }
@@ -101,6 +115,12 @@ class Index extends Component
     {
         $this->validate();
         $storeId = auth()->user()->store_id;
+
+        $imagePath = $this->currentImage;
+        if ($this->image) {
+            $stored = $this->image->store('products', 'public');
+            $imagePath = 'storage/' . $stored;
+        }
 
         if ($this->productId) {
             $product = Product::where('store_id', $storeId)->findOrFail($this->productId);
@@ -113,6 +133,7 @@ class Index extends Component
                 'cost_price' => $this->cost_price,
                 'sale_price' => $this->sale_price,
                 'min_stock' => $this->min_stock,
+                'image' => $imagePath,
             ]);
 
             // Cập nhật tồn kho
@@ -144,6 +165,7 @@ class Index extends Component
                 'cost_price' => $this->cost_price,
                 'sale_price' => $this->sale_price,
                 'min_stock' => $this->min_stock,
+                'image' => $imagePath,
                 'status' => 1,
             ]);
 

@@ -61,6 +61,6 @@ class Assistant extends Component
             'totalTokens' => $totalTokens,
             'hasGemini' => ! empty(config('services.gemini.key')),
             'hasOpenAi' => ! empty(config('services.openai.key')),
-        ])->layout('layouts.app', ['headerTitle' => 'Trợ lý AI Phân tích Kinh doanh']);
+        ])->layout('layouts.app', ['headerTitle' => 'Trợ lý phân tích']);
     }
 }

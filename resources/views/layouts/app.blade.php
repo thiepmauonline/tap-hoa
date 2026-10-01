@@ -30,34 +30,59 @@
         /* Sidebar Styling */
         #sidebar {
             width: var(--sidebar-width);
-            min-height: 100vh;
+            height: 100vh;
             background: #0f172a;
             color: #94a3b8;
             position: fixed;
             top: 0;
             left: 0;
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
             transition: all 0.3s ease;
         }
 
         #sidebar .brand {
-            padding: 1.25rem 1.5rem;
-            font-size: 1.2rem;
+            padding: 1.15rem 1.25rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: #ffffff;
             border-bottom: 1px solid #1e293b;
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        #sidebar .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0.5rem 0 2rem;
+        }
+
+        /* Custom slim scrollbar for sidebar nav */
+        #sidebar .sidebar-nav::-webkit-scrollbar {
+            width: 4px;
+        }
+        #sidebar .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #sidebar .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        #sidebar .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: #475569;
         }
 
         #sidebar .nav-link {
             color: #94a3b8;
-            padding: 0.75rem 1.25rem;
-            margin: 0.2rem 0.8rem;
+            padding: 0.65rem 1rem;
+            margin: 0.15rem 0.65rem;
             border-radius: 0.5rem;
             font-weight: 500;
-            font-size: 0.925rem;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -70,12 +95,12 @@
         }
 
         #sidebar .nav-heading {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: #64748b;
-            padding: 1rem 1.5rem 0.4rem;
+            padding: 0.9rem 1.25rem 0.35rem;
         }
 
         /* Main Content Styling */
@@ -106,37 +131,15 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        /* AI Floating Button & Drawer Widget */
-        .ai-floating-btn {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            z-index: 1050;
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 12px 24px;
-            font-weight: 600;
-            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .ai-floating-btn:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.6);
-            color: white;
-        }
-
         /* Badge Pills */
         .badge-soft-primary { background: #e0e7ff; color: #4338ca; }
         .badge-soft-success { background: #dcfce7; color: #15803d; }
         .badge-soft-warning { background: #fef9c3; color: #a16207; }
         .badge-soft-danger  { background: #fee2e2; color: #b91c1c; }
+
+        /* Utility font sizes */
+        .fs-7 { font-size: 0.825rem !important; }
+        .fs-8 { font-size: 0.75rem !important; }
     </style>
 
     @livewireStyles
@@ -146,14 +149,14 @@
     <!-- Sidebar Bar -->
     <div id="sidebar">
         <div class="brand">
-            <i class="bi bi-shop fs-4 text-warning"></i>
-            <div class="text-truncate">
-                <div>{{ auth()->user()->store->name ?? 'TapHoa SaaS' }}</div>
-                <small class="text-secondary fw-normal fs-7" style="font-size: 0.75rem;">Mô hình SaaS Multi-tenant</small>
+            <i class="bi bi-shop fs-4 text-warning flex-shrink-0"></i>
+            <div style="min-width: 0;">
+                <div class="text-truncate fw-bold">{{ auth()->user()->store->name ?? 'TapHoa SaaS' }}</div>
+                <small class="text-secondary fw-normal d-block text-truncate" style="font-size: 0.75rem;">Phần mềm quản lý bán hàng</small>
             </div>
         </div>
 
-        <div class="py-2">
+        <div class="sidebar-nav">
             <div class="nav-heading">Tổng quan</div>
             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển
@@ -163,8 +166,8 @@
                 <i class="bi bi-bar-chart-line-fill"></i> Báo cáo kinh doanh
             </a>
             @endif
-            <a href="{{ route('pos') }}" class="nav-link bg-success text-white my-2 fw-bold shadow-sm" target="_blank">
-                <i class="bi bi-calculator-fill"></i> Bán hàng POS (Mở quầy)
+            <a href="{{ route('pos') }}" class="nav-link bg-success text-white my-2 fw-semibold shadow-sm" target="_blank">
+                <i class="bi bi-calculator"></i> Bán hàng (POS)
             </a>
 
             <div class="nav-heading">Quản lý kho & Nhập bán</div>
@@ -196,9 +199,9 @@
                 <i class="bi bi-people"></i> Khách hàng tích điểm
             </a>
 
-            <div class="nav-heading">Trợ lý AI & Cấu hình</div>
+            <div class="nav-heading">Trợ lý & Hệ thống</div>
             <a href="{{ route('ai.assistant') }}" class="nav-link {{ request()->routeIs('ai.*') ? 'active' : '' }}">
-                <i class="bi bi-robot text-warning"></i> Trợ lý AI Phân tích
+                <i class="bi bi-robot"></i> Trợ lý phân tích
             </a>
 
             @if(auth()->user()->isOwner())
@@ -276,12 +279,6 @@
             {{ $slot }}
         </div>
     </div>
-
-    <!-- AI Assistant Floating Button -->
-    <a href="{{ route('ai.assistant') }}" class="ai-floating-btn text-decoration-none">
-        <i class="bi bi-stars fs-5"></i>
-        <span>Hỏi AI Phân tích</span>
-    </a>
 
     <!-- Bootstrap 5 JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

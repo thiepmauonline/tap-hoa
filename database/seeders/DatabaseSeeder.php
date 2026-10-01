@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         // Tài khoản Cửa hàng 1
         $owner1 = User::create([
             'store_id' => $store1->id,
-            'name' => 'Nguyễn Văn Hạnh (Chủ quán)',
+            'name' => 'Nguyễn Văn Hạnh',
             'email' => 'admin@taphoa.com',
             'phone' => '0987654321',
             'password' => Hash::make('password'),
@@ -47,7 +47,7 @@ class DatabaseSeeder extends Seeder
 
         $staff1 = User::create([
             'store_id' => $store1->id,
-            'name' => 'Trần Thị Thu (Thu ngân)',
+            'name' => 'Trần Thị Thu',
             'email' => 'nhanvien@taphoa.com',
             'phone' => '0912345678',
             'password' => Hash::make('password'),
@@ -303,12 +303,12 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // 10. Tạo Lịch sử Hỏi đáp AI Mẫu (AI Logs)
+        // 10. Tạo Lịch sử Hỏi đáp Mẫu (AI Logs)
         AiLog::create([
             'store_id' => $store1->id,
             'user_id' => $owner1->id,
             'question' => 'Mặt hàng nào bán chạy nhất tuần này?',
-            'answer' => "🤖 **AI Trợ Lý Phân Tích Doanh Số**:\n\n1. **Mì Hảo Hảo Tôm Chua Cay 75g**: Đã bán 210 gói (Doanh thu: 945.000 đ)\n2. **Nước ngọt Coca-Cola Lon 320ml**: Đã bán 85 lon (Doanh thu: 935.000 đ)\n3. **Bánh Cosy Mè Dừa 288g**: Đã bán 12 hộp (Doanh thu: 504.000 đ)\n\n💡 **Khuyên dùng**: Mì Hảo Hảo là mặt hàng thiết yếu bán liên tục, hãy duy trì tồn kho từ 60 gói trở lên.",
+            'answer' => "**Top sản phẩm bán chạy trong tuần:**\n\n1. **Mì Hảo Hảo Tôm Chua Cay 75g**: Đã bán 210 gói (Doanh số: 945.000 đ)\n2. **Nước ngọt Coca-Cola Lon 320ml**: Đã bán 85 lon (Doanh số: 935.000 đ)\n3. **Bánh Cosy Mè Dừa 288g**: Đã bán 12 hộp (Doanh số: 504.000 đ)\n\n**Gợi ý vận hành:** Mì Hảo Hảo có lượng tiêu thụ nhanh và đều, nên duy trì tồn kho tối thiểu từ 60 gói trở lên.",
             'type' => 'analysis',
             'tokens_used' => 280,
             'created_at' => Carbon::now()->subHours(1),
@@ -318,7 +318,7 @@ class DatabaseSeeder extends Seeder
             'store_id' => $store1->id,
             'user_id' => $owner1->id,
             'question' => 'Có sản phẩm nào trong kho sắp hết cần nhập thêm không?',
-            'answer' => "🤖 **AI Trợ Lý Cảnh Báo & Gợi Ý Nhập Hàng**:\n\nPhát hiện **2 sản phẩm** chạm hoặc dưới ngưỡng tồn kho an toàn:\n- **Bim Bim Oishi Vị Tôm Cay 40g**: Hiện còn **8 gói** (Ngưỡng an toàn: 20 gói)\n- **Nước mắm Nam Ngư Đệ Nhị 500ml**: Hiện còn **4 chai** (Ngưỡng an toàn: 12 chai)\n\n⚠️ **Khuyên dùng**: Bạn nên tạo phiếu nhập hàng từ Nhà cung cấp Unilever và Kinh Đô trong hôm nay.",
+            'answer' => "**Cảnh báo tồn kho & Kế hoạch nhập hàng:**\n\nHệ thống ghi nhận 2 sản phẩm chạm hoặc dưới mức tồn kho tối thiểu:\n- **Bim Bim Oishi Vị Tôm Cay 40g**: Còn 8 gói (Mức tối thiểu: 20 gói)\n- **Nước mắm Nam Ngư Đệ Nhị 500ml**: Còn 4 chai (Mức tối thiểu: 12 chai)\n\nBạn có thể vào mục **Nhập hàng kho** để tạo phiếu nhập từ nhà cung cấp tương ứng.",
             'type' => 'restock',
             'tokens_used' => 310,
             'created_at' => Carbon::now()->subMinutes(15),
@@ -338,7 +338,7 @@ class DatabaseSeeder extends Seeder
 
         User::create([
             'store_id' => $store2->id,
-            'name' => 'Lê Minh Anh (Chủ quán)',
+            'name' => 'Lê Minh Anh',
             'email' => 'minhanh@taphoa.com',
             'phone' => '0905999888',
             'password' => Hash::make('password'),

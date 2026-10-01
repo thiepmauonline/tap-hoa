@@ -1,13 +1,14 @@
 <div>
-    <!-- Banner Chào mừng & Cửa hàng -->
-    <div class="card card-custom border-0 bg-primary text-white p-4 mb-4 shadow-sm" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-                <h4 class="fw-bold mb-1"><i class="bi bi-shop me-2"></i> {{ auth()->user()->store->name }}</h4>
-                <p class="mb-0 text-white-50 fs-7">Xin chào <strong>{{ auth()->user()->name }}</strong>, chúc bạn một ngày bán hàng thành công!</p>
-            </div>
-            <a href="{{ route('pos') }}" class="btn btn-warning btn-lg fw-bold px-4 shadow" target="_blank">
-                <i class="bi bi-calculator-fill me-2"></i> BẮT ĐẦU BÁN HÀNG (POS)
+    <!-- Tiêu đề & Nút thao tác -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1">{{ auth()->user()->store->name }}</h4>
+            <div class="text-muted fs-7">Xin chào {{ auth()->user()->name }} • Tổng quan hoạt động kinh doanh</div>
+        </div>
+        <div>
+            <a href="{{ route('pos') }}" class="btn btn-primary fw-semibold px-3 py-2 shadow-sm d-flex align-items-center gap-2" target="_blank">
+                <i class="bi bi-calculator"></i>
+                <span>Mở quầy bán hàng (POS)</span>
             </a>
         </div>
     </div>
@@ -16,14 +17,14 @@
     <div class="row g-3 mb-4">
         <!-- Doanh thu hôm nay -->
         <div class="col-xl-3 col-sm-6">
-            <div class="card card-custom p-3 border-start border-primary border-4">
+            <div class="card card-custom p-3 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-muted fs-7 fw-semibold">DOANH THU HÔM NAY</span>
+                        <span class="text-muted fs-7 fw-medium">Doanh thu hôm nay</span>
                         <h4 class="fw-bold text-dark mt-1 mb-0">{{ number_format($todayRevenue, 0, ',', '.') }} đ</h4>
                     </div>
-                    <div class="bg-primary text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width:48px; height:48px;">
-                        <i class="bi bi-currency-dollar fs-4"></i>
+                    <div class="bg-light text-primary rounded-3 p-2.5 d-flex align-items-center justify-content-center border" style="width:42px; height:42px;">
+                        <i class="bi bi-cash-stack fs-5"></i>
                     </div>
                 </div>
             </div>
@@ -31,14 +32,14 @@
 
         <!-- Đơn bán hôm nay -->
         <div class="col-xl-3 col-sm-6">
-            <div class="card card-custom p-3 border-start border-success border-4">
+            <div class="card card-custom p-3 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-muted fs-7 fw-semibold">ĐƠN HÀNG HÔM NAY</span>
+                        <span class="text-muted fs-7 fw-medium">Đơn hàng hôm nay</span>
                         <h4 class="fw-bold text-dark mt-1 mb-0">{{ $todayOrdersCount }} đơn</h4>
                     </div>
-                    <div class="bg-success text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width:48px; height:48px;">
-                        <i class="bi bi-bag-check-fill fs-4"></i>
+                    <div class="bg-light text-success rounded-3 p-2.5 d-flex align-items-center justify-content-center border" style="width:42px; height:42px;">
+                        <i class="bi bi-bag-check fs-5"></i>
                     </div>
                 </div>
             </div>
@@ -46,14 +47,14 @@
 
         <!-- Tổng sản phẩm -->
         <div class="col-xl-3 col-sm-6">
-            <div class="card card-custom p-3 border-start border-info border-4">
+            <div class="card card-custom p-3 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-muted fs-7 fw-semibold">SẢN PHẨM TRONG KHO</span>
-                        <h4 class="fw-bold text-dark mt-1 mb-0">{{ $totalProductsCount }} mã</h4>
+                        <span class="text-muted fs-7 fw-medium">Sản phẩm đang bán</span>
+                        <h4 class="fw-bold text-dark mt-1 mb-0">{{ $totalProductsCount }} mặt hàng</h4>
                     </div>
-                    <div class="bg-info text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width:48px; height:48px;">
-                        <i class="bi bi-box-seam-fill fs-4"></i>
+                    <div class="bg-light text-secondary rounded-3 p-2.5 d-flex align-items-center justify-content-center border" style="width:42px; height:42px;">
+                        <i class="bi bi-box-seam fs-5"></i>
                     </div>
                 </div>
             </div>
@@ -61,14 +62,14 @@
 
         <!-- Cảnh báo hết kho -->
         <div class="col-xl-3 col-sm-6">
-            <div class="card card-custom p-3 border-start border-danger border-4">
+            <div class="card card-custom p-3 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-muted fs-7 fw-semibold">CẢNH BÁO SẮP HẾT HÀNG</span>
+                        <span class="text-muted fs-7 fw-medium">Sắp hết hàng</span>
                         <h4 class="fw-bold text-danger mt-1 mb-0">{{ $lowStockCount }} sản phẩm</h4>
                     </div>
-                    <div class="bg-danger text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width:48px; height:48px;">
-                        <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                    <div class="bg-light text-danger rounded-3 p-2.5 d-flex align-items-center justify-content-center border" style="width:42px; height:42px;">
+                        <i class="bi bi-exclamation-triangle fs-5"></i>
                     </div>
                 </div>
             </div>
@@ -79,13 +80,11 @@
     <div class="card card-custom p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h5 class="fw-bold text-dark mb-1">
-                    <i class="bi bi-graph-up-arrow me-2 text-primary"></i> Biểu đồ Tăng trưởng Doanh thu (7 Ngày Gần Nhất)
-                </h5>
-                <small class="text-muted">Thống kê doanh thu tự động ghi nhận từ các đơn hàng bán ra tại quầy POS</small>
+                <h6 class="fw-bold text-dark mb-1">Doanh thu 7 ngày gần nhất</h6>
+                <small class="text-muted">Biểu đồ tổng hợp giá trị các đơn bán hoàn tất</small>
             </div>
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-7 fw-semibold">
-                <i class="bi bi-calendar-range me-1"></i> {{ $chartLabels[0] ?? '' }} - {{ end($chartLabels) }}
+            <span class="badge bg-light text-secondary border px-3 py-1.5 fs-7 fw-normal">
+                {{ $chartLabels[0] ?? '' }} — {{ end($chartLabels) }}
             </span>
         </div>
         <div style="position: relative; height: 320px; width: 100%;">
@@ -98,9 +97,9 @@
         <!-- Đơn bán mới nhất -->
         <div class="col-lg-7">
             <div class="card card-custom h-100">
-                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3 px-3">
-                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i> Đơn hàng bán mới nhất</h6>
-                    <a href="{{ route('orders.index') }}" class="btn btn-sm btn-link text-decoration-none">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3 px-3">
+                    <h6 class="fw-bold text-dark mb-0">Đơn hàng gần đây</h6>
+                    <a href="{{ route('orders.index') }}" class="btn btn-sm btn-link text-decoration-none p-0">Xem tất cả <i class="bi bi-arrow-right"></i></a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -139,10 +138,10 @@
 
         <!-- Sản phẩm sắp hết kho cần nhập thêm -->
         <div class="col-lg-5">
-            <div class="card card-custom h-100 border-danger border-opacity-25">
-                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3 px-3">
-                    <h6 class="fw-bold text-danger mb-0"><i class="bi bi-exclamation-octagon me-2"></i> Cần nhập thêm ngay</h6>
-                    <a href="{{ route('purchase-orders.create') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-plus-circle me-1"></i> Nhập kho</a>
+            <div class="card card-custom h-100">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3 px-3">
+                    <h6 class="fw-bold text-dark mb-0">Hàng sắp hết kho</h6>
+                    <a href="{{ route('purchase-orders.create') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg me-1"></i> Nhập hàng</a>
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
@@ -150,14 +149,14 @@
                             <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2.5">
                                 <div>
                                     <div class="fw-semibold text-dark fs-7">{{ $lp->name }}</div>
-                                    <small class="text-muted fs-8">Mã vạch: {{ $lp->barcode ?? 'N/A' }} | Danh mục: {{ $lp->category->name ?? 'Khác' }}</small>
+                                    <small class="text-muted fs-8">{{ $lp->barcode ? 'Mã: ' . $lp->barcode . ' | ' : '' }}{{ $lp->category->name ?? 'Khác' }}</small>
                                 </div>
-                                <span class="badge bg-danger fs-7">Tồn: {{ $lp->inventory->quantity ?? 0 }} {{ $lp->unit }}</span>
+                                <span class="badge bg-light text-danger border border-danger-subtle fs-7">Còn {{ $lp->inventory->quantity ?? 0 }} {{ $lp->unit }}</span>
                             </div>
                         @empty
                             <div class="text-center text-muted py-4">
                                 <i class="bi bi-check-circle fs-3 text-success d-block mb-1"></i>
-                                Kho hàng đang ở mức an toàn!
+                                Kho hàng đang ở mức an toàn
                             </div>
                         @endforelse
                     </div>

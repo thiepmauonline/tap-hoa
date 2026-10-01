@@ -207,7 +207,7 @@ TEXT;
             return [
                 'answer' => $geminiResult['text'],
                 'tokens_used' => $geminiResult['tokens'],
-                'provider' => 'Google Gemini (gemini-1.5-flash)',
+                'provider' => 'Google Gemini (' . ($geminiResult['model'] ?? 'Cloud API') . ')',
                 'type' => $type,
             ];
         }
@@ -248,42 +248,59 @@ TEXT;
             return null;
         }
 
-        $model = config('services.gemini.model', 'gemini-1.5-flash');
-        $systemInstruction = "Bạn là Trợ lý AI Cố vấn Kinh doanh Bán lẻ Cấp cao cho cửa hàng tạp hóa SaaS. " .
-            "Nhiệm vụ của bạn là phân tích dữ liệu thực tế, giải đáp chính xác và đưa ra các đề xuất hành động cụ thể (nhập hàng, xả tồn kho, khuyến mãi, tối ưu lợi nhuận) giúp chủ cửa hàng kinh doanh hiệu quả hơn. " .
-            "Hãy trình bày bằng tiếng Việt chuyên nghiệp, ngắn gọn, có icon sinh động, định dạng Markdown rõ ràng.";
+        $configuredModel = config('services.gemini.model', 'gemini-3.1-flash-lite');
+        // Danh sách ưu tiên thử nghiệm nếu model chính bị lỗi phiên bản/demand spike
+        $modelsToTry = array_unique([$configuredModel, 'gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-2.5-pro']);
 
-        $fullPrompt = "{$contextText}\n\nCâu hỏi của chủ cửa hàng: \"{$question}\"\n\nHãy phân tích và trả lời trực tiếp dựa trên số liệu thực tế ở trên:";
+        $systemInstruction = <<<INSTRUCTION
+Bạn là trợ lý thông minh, thân thiện và đáng tin cậy hỗ trợ quản lý bán lẻ cho cửa hàng tạp hóa.
+Phong cách giao tiếp:
+1. Giao tiếp tự nhiên, văn minh và ấm áp như một người cộng sự ngoài đời thực:
+   - Khi người dùng chào hỏi ("chào", "hello", "bạn là ai", v.v.), hỏi thăm sức khỏe hoặc trò chuyện thông thường: Hãy đáp lại niềm nở, tự nhiên, ngắn gọn và giới thiệu vai trò sẵn sàng hỗ trợ của mình.
+   - Tuyệt đối không trả lời máy móc, dập khuôn, không dùng khẩu hiệu sáo rỗng.
+2. Khi người dùng hỏi về hoạt động kinh doanh (doanh thu, lợi nhuận, sản phẩm bán chạy, hàng tồn kho, gợi ý nhập hàng, chiến lược bán lẻ):
+   - Sử dụng các số liệu thực tế được cung cấp trong phần DỮ LIỆU CỬA HÀNG để phân tích chính xác, súc tích và có chiều sâu.
+   - Đưa ra các gợi ý hành động cụ thể, khả thi cho cửa hàng tạp hóa (nhập hàng, xả tồn, combo khuyến mãi, nhắc khách dùng điểm...).
+3. Trình bày bằng định dạng Markdown rõ ràng, dễ đọc, làm nổi bật các con số và tên sản phẩm.
+INSTRUCTION;
 
-        try {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$geminiKey}";
-            $response = Http::timeout(15)->post($url, [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => "{$systemInstruction}\n\n{$fullPrompt}"]
+        $fullPrompt = "=== DỮ LIỆU VẬN HÀNH THỰC TẾ CỬA HÀNG ===\n{$contextText}\n\n=== NGƯỜI DÙNG HỎI HOẶC TRÒ CHUYỆN ===\n\"{$question}\"\n\nHãy phản hồi một cách tự nhiên, đúng trọng tâm và phù hợp nhất với lời nhắn trên:";
+
+        foreach ($modelsToTry as $model) {
+            try {
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$geminiKey}";
+                $response = Http::timeout(15)->post($url, [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => "{$systemInstruction}\n\n{$fullPrompt}"]
+                            ]
                         ]
-                    ]
-                ],
-                'generationConfig' => [
-                    'temperature' => 0.3,
-                    'maxOutputTokens' => 1200,
-                ],
-            ]);
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.4,
+                        'maxOutputTokens' => 1200,
+                    ],
+                ]);
 
-            if ($response->successful()) {
-                $json = $response->json();
-                $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? null;
-                $tokens = $json['usageMetadata']['totalTokenCount'] ?? rand(250, 450);
+                if ($response->successful()) {
+                    $json = $response->json();
+                    $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? null;
+                    $tokens = $json['usageMetadata']['totalTokenCount'] ?? rand(150, 350);
 
-                if (! empty($text)) {
-                    return ['text' => trim($text), 'tokens' => (int) $tokens];
+                    if (! empty($text)) {
+                        return [
+                            'text' => trim($text),
+                            'tokens' => (int) $tokens,
+                            'model' => $model,
+                        ];
+                    }
+                } else {
+                    Log::warning("Gemini API Error with model {$model}: " . $response->body());
                 }
-            } else {
-                Log::warning('Gemini API Error: ' . $response->body());
+            } catch (\Throwable $e) {
+                Log::error("Gemini API Exception with model {$model}: " . $e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::error('Gemini API Exception: ' . $e->getMessage());
         }
 
         return null;
@@ -300,8 +317,7 @@ TEXT;
         }
 
         $model = config('services.openai.model', 'gpt-4o-mini');
-        $systemPrompt = "Bạn là Trợ lý AI Cố vấn Kinh doanh Bán lẻ Cấp cao cho cửa hàng tạp hóa SaaS. " .
-            "Phân tích dữ liệu thực tế cửa hàng dưới đây để trả lời câu hỏi và đưa ra đề xuất cải thiện kinh doanh cụ thể:\n{$contextText}";
+        $systemPrompt = "Bạn là trợ lý hỗ trợ quản lý bán lẻ cho cửa hàng tạp hóa. Hãy trả lời trực tiếp, rõ ràng, gãy gọn bằng tiếng Việt dựa trên dữ liệu cửa hàng sau:\n{$contextText}\nKhông chào hỏi rườm rà, không dùng văn phong máy móc, đưa ra số liệu cụ thể và gợi ý hành động thiết thực.";
 
         try {
             $response = Http::timeout(15)->withToken($openaiKey)->post('https://api.openai.com/v1/chat/completions', [
@@ -341,51 +357,92 @@ TEXT;
     {
         $lower = mb_strtolower($question);
 
+        // 0. Chào hỏi & Giao tiếp tự nhiên
+        if (preg_match('/^(chào|chao|hello|hi|helo|alo|hế lô|ê|êi|hey)/iu', $lower) || str_contains($lower, 'bạn là ai') || str_contains($lower, 'ai đấy') || str_contains($lower, 'bạn tên gì') || str_contains($lower, 'giới thiệu')) {
+            return "Chào bạn! Tôi là trợ lý hỗ trợ quản lý và phân tích dữ liệu cho cửa hàng **{$data['store_name']}**.\n\n" .
+                   "Tôi luôn ở đây để giúp bạn theo dõi doanh thu hàng ngày, xem các món bán chạy, phát hiện hàng sắp hết kho hoặc tìm các mặt hàng tồn lâu ngày để lên kế hoạch nhập/xả hàng kịp thời.\n\n" .
+                   "Hôm nay bạn cần kiểm tra thông tin gì của cửa hàng?";
+        }
+
+        // Hỏi thăm sức khỏe / tâm sự / trạng thái
+        if (str_contains($lower, 'khỏe không') || str_contains($lower, 'khoe khong') || str_contains($lower, 'dạo này thế nào') || str_contains($lower, 'sao rồi') || str_contains($lower, 'ổn không') || str_contains($lower, 'on khong')) {
+            return "Cảm ơn bạn đã hỏi thăm! Tôi luôn sẵn sàng 24/7 để đồng hành cùng bạn quản lý tiệm.\n\n" .
+                   "Hôm nay tình hình buôn bán thế nào rồi bạn? Cần kiểm tra doanh thu trong ngày hay tình hình hàng tồn kho thì cứ bảo tôi nhé!";
+        }
+
+        // Tán gẫu / Than phiền buôn bán
+        if (str_contains($lower, 'ế quá') || str_contains($lower, 'bán ế') || str_contains($lower, 'vắng khách') || str_contains($lower, 'chán quá') || str_contains($lower, 'mệt quá') || str_contains($lower, 'buồn quá')) {
+            return "Kinh doanh bán lẻ sẽ có những ngày vắng khách, bạn đừng nản nhé!\n\n" .
+                   "Bạn có thể thử kiểm tra danh sách **hàng tồn lâu ngày** để tạo combo giảm giá nhẹ hoặc sắp xếp lại kệ trưng bày gần cửa ra vào để hút khách ghé tiệm xem sao nhé. Cần tôi tra cứu danh sách tồn kho hay gợi ý giải pháp tăng doanh thu không?";
+        }
+
+        // Lời chúc & Tạm biệt
+        if (str_contains($lower, 'buổi sáng') || str_contains($lower, 'chúc ngày mới') || str_contains($lower, 'chúc bán đắt') || str_contains($lower, 'buôn may bán đắt')) {
+            return "Cảm ơn bạn rất nhiều! Chúc cửa hàng hôm nay buôn may bán đắt, khách vào nườm nượp và thanh toán thuận lợi nhé!";
+        }
+
+        if (str_contains($lower, 'tạm biệt') || str_contains($lower, 'tam biet') || str_contains($lower, 'bye') || str_contains($lower, 'hẹn gặp lại')) {
+            return "Tạm biệt bạn! Chúc cửa hàng kinh doanh luôn phát đạt. Khi nào cần kiểm tra số liệu hay hàng hóa bạn cứ mở lại trợ lý nhé!";
+        }
+
+        // Lời cảm ơn / phản hồi tích cực
+        if (str_contains($lower, 'cảm ơn') || str_contains($lower, 'cam on') || str_contains($lower, 'thank') || $lower === 'ok' || $lower === 'oke' || $lower === 'tốt' || $lower === 'tuyệt') {
+            return "Rất sẵn lòng hỗ trợ bạn! Cần kiểm tra thêm số liệu bán hàng hay tình hình kho, bạn cứ nhắn nhé.";
+        }
+
+        // Hỏi về chức năng / năng lực
+        if (str_contains($lower, 'làm được gì') || str_contains($lower, 'chức năng') || str_contains($lower, 'giúp gì') || str_contains($lower, 'hướng dẫn')) {
+            return "Tôi có thể hỗ trợ bạn các công việc sau:\n\n" .
+                   "1. **Phân tích bán chạy**: Xem các mặt hàng có doanh số và số lượng bán tốt nhất.\n" .
+                   "2. **Cảnh báo hết kho**: Phát hiện sản phẩm chạm ngưỡng an toàn và gợi ý số lượng cần nhập.\n" .
+                   "3. **Rà soát hàng tồn lâu**: Tìm các món trên 45 ngày chưa bán được để giải phóng vốn đọng.\n" .
+                   "4. **Báo cáo doanh thu & lợi nhuận**: Tổng hợp doanh thu hôm nay, tuần này và biên lợi nhuận gộp.\n" .
+                   "5. **Tư vấn kinh doanh**: Gợi ý các giải pháp tăng doanh số và tối ưu vận hành tiệm.\n\n" .
+                   "Bạn muốn xem mục nào trước?";
+        }
+
         // 1. Phân tích sản phẩm bán chạy (Top selling)
         if (str_contains($lower, 'bán chạy') || str_contains($lower, 'chạy nhất') || str_contains($lower, 'hot') || str_contains($lower, 'bán nhiều')) {
             $top = $data['top_products'];
             if (empty($top) || $top->isEmpty()) {
-                return "🤖 **AI Phân Tích Bán Chạy**:\n\n" .
-                       "Hiện tại cửa hàng chưa ghi nhận đủ dữ liệu hóa đơn bán ra để thống kê top bán chạy. Bạn hãy thực hiện thêm đơn bán tại quầy POS để AI phân tích chuẩn xác nhé!";
+                return "Hiện tại cửa hàng chưa ghi nhận đủ dữ liệu hóa đơn bán ra để thống kê top bán chạy.";
             }
 
-            $msg = "🤖 **AI Phân Tích Sản Phẩm Bán Chạy Nhất (30 Ngày Qua)**:\n\n";
+            $msg = "**Top sản phẩm bán chạy nhất (30 ngày qua):**\n\n";
             foreach ($top as $idx => $item) {
                 $stt = $idx + 1;
                 $name = $item->name ?? 'Sản phẩm';
                 $sales = number_format($item->total_sales, 0, ',', '.');
-                $msg .= "{$stt}. **{$name}**: Đã bán **{$item->total_qty}** {$item->unit} — Doanh thu: **{$sales} đ**\n";
+                $msg .= "{$stt}. **{$name}**: Đã bán **{$item->total_qty}** {$item->unit} (Doanh số: {$sales} đ)\n";
             }
 
             $best = $top->first();
-            $msg .= "\n💡 **Đề xuất chiến lược**:\n" .
-                    "- Mặt hàng **{$best->name}** là sản phẩm dẫn dắt doanh số của cửa hàng. Bạn nên đặt vị trí trưng bày ở quầy ngang tầm mắt hoặc gần quầy thu ngân.\n" .
-                    "- Luôn duy trì mức tồn kho đệm tối thiểu ít nhất 2 tuần bán để tránh đứt gãy nguồn cung.";
+            $msg .= "\n**Gợi ý vận hành:**\n" .
+                    "- Mặt hàng **{$best->name}** có lượng tiêu thụ cao nhất, nên duy trì mức tồn kho đệm ổn định để tránh hết hàng.\n" .
+                    "- Bố trí các sản phẩm bán chạy ở vị trí dễ nhìn hoặc gần quầy thu ngân để khách tiện lấy thêm.";
             return $msg;
         }
 
         // 2. Phân tích sản phẩm tồn kho lâu / Hàng ế / Xả hàng (Dead stock / Slow-moving)
-        if (str_contains($lower, 'tồn kho lâu') || str_contains($lower, 'tồn lâu') || str_contains($lower, 'hàng ế') || str_contains($lower, 'chậm luân chuyển') || str_contains($lower, 'xả hàng') || str_contains($lower, 'không bán được')) {
+        if (str_contains($lower, 'tồn kho lâu') || str_contains($lower, 'tồn lâu') || str_contains($lower, 'hàng ế') || str_contains($lower, 'chậm luân chuyển') || str_contains($lower, 'xả hàng') || str_contains($lower, 'không bán được') || str_contains($lower, 'chưa bán được')) {
             $slow = $data['slow_stock_products'];
             if (empty($slow) || $slow->isEmpty()) {
-                return "🤖 **AI Phân Tích Hàng Tồn Lâu**:\n\n" .
-                       "🎉 **Tuyệt vời!** Cửa hàng hiện không có sản phẩm nào bị đọng kho trên 45 ngày. Tốc độ luân chuyển hàng hóa của bạn đang rất lành mạnh!";
+                return "Hiện tại cửa hàng không có sản phẩm nào tồn kho quá 45 ngày chưa bán được. Tốc độ luân chuyển hàng hóa đang ở mức tốt.";
             }
 
-            $msg = "🤖 **AI Nhận Diện & Đề Xuất Xử Lý Hàng Tồn Kho Lâu Ngày**:\n\n" .
-                   "Phát hiện **" . count($slow) . " mặt hàng** có lượng tồn kho nhưng không phát sinh giao dịch bán trong hơn 45 ngày qua:\n\n";
+            $msg = "**Danh sách sản phẩm tồn kho chậm luân chuyển (>45 ngày):**\n\n";
 
             foreach ($slow as $idx => $p) {
                 $stt = $idx + 1;
                 $qty = $p->inventory->quantity ?? 0;
-                $lastSold = $p->last_sold_at ? $p->last_sold_at->format('d/m/Y') : 'Chưa từng bán';
-                $msg .= "{$stt}. **{$p->name}**: Tồn kho **{$qty} {$p->unit}** (Lần bán gần nhất: *{$lastSold}*)\n";
+                $lastSold = $p->last_sold_at ? $p->last_sold_at->format('d/m/Y') : 'Chưa phát sinh đơn bán';
+                $msg .= "{$stt}. **{$p->name}**: Còn tồn **{$qty} {$p->unit}** (Lần bán gần nhất: {$lastSold})\n";
             }
 
-            $msg .= "\n📋 **Đề xuất giải pháp giải phóng vốn đọng**:\n" .
-                    "1. **Bán theo Combo**: Ghép sản phẩm tồn lâu làm quà tặng hoặc giảm giá 20-30% khi mua kèm các sản phẩm bán chạy nhất.\n" .
-                    "2. **Thay đổi vị trí trưng bày**: Chuyển các món này ra phía đầu kệ hoặc gần lối thanh toán để tăng tần suất tiếp cận khách hàng.\n" .
-                    "3. **Hạn chế nhập thêm**: Tạm ngừng nhập các mã hàng trên từ nhà cung cấp cho tới khi giải phóng hết lượng tồn cũ.";
+            $msg .= "\n**Đề xuất xử lý:**\n" .
+                    "- Ghép bán theo dạng combo (ví dụ: mua kèm sản phẩm bán chạy để giảm giá nhẹ hoặc tặng kèm).\n" .
+                    "- Đưa ra khu vực kệ đầu dãy hoặc gần lối đi để tăng cơ hội tiếp cận khách.\n" .
+                    "- Tạm ngừng nhập thêm các mã hàng này cho đến khi giải phóng hết lượng tồn cũ.";
             return $msg;
         }
 
@@ -393,22 +450,20 @@ TEXT;
         if (str_contains($lower, 'sắp hết') || str_contains($lower, 'hết hàng') || str_contains($lower, 'nhập hàng') || str_contains($lower, 'gợi ý nhập') || str_contains($lower, 'tồn kho an toàn')) {
             $low = $data['low_stock_products'];
             if (empty($low) || $low->isEmpty()) {
-                return "🤖 **AI Kiểm Soát Tồn Kho**:\n\n" .
-                       "✅ **Kho hàng an toàn!** Toàn bộ các sản phẩm đang có số lượng tồn vượt trên ngưỡng an toàn tối thiểu. Bạn chưa cần phải nhập hàng gấp hôm nay.";
+                return "Kho hàng đang ở mức an toàn. Tất cả sản phẩm đều có số lượng tồn trên ngưỡng tối thiểu.";
             }
 
-            $msg = "🤖 **AI Cảnh Báo Thiếu Hụt & Gợi Ý Kế Hoạch Nhập Hàng**:\n\n" .
-                   "Hệ thống phát hiện **" . count($low) . " sản phẩm** đang ở dưới hoặc bằng mức tồn kho tối thiểu:\n\n";
+            $msg = "**Danh sách sản phẩm sắp hết kho cần bổ sung:**\n\n";
 
             foreach ($low as $p) {
                 $qty = $p->inventory->quantity ?? 0;
-                $sup = $p->supplier->name ?? 'Nhà cung cấp';
+                $sup = $p->supplier->name ?? 'Chưa gán NCC';
                 $suggestQty = max(10, $p->min_stock * 2 - $qty);
-                $msg .= "- **{$p->name}**: Tồn thực tế **{$qty} {$p->unit}** (Mức an toàn: {$p->min_stock} {$p->unit})\n" .
-                        "  👉 *Đề xuất*: Nhập thêm khoảng **{$suggestQty} {$p->unit}** từ *{$sup}*.\n";
+                $msg .= "- **{$p->name}**: Còn tồn **{$qty} {$p->unit}** (Ngưỡng tối thiểu: {$p->min_stock} {$p->unit})\n" .
+                        "  → Gợi ý nhập thêm: khoảng **{$suggestQty} {$p->unit}** (NCC: {$sup})\n";
             }
 
-            $msg .= "\n🛒 **Khuyến nghị**: Bạn có thể truy cập vào mục **Nhập Hàng Kho** để tạo phiếu nhập ngay nhằm không bị gián đoạn hoạt động bán lẻ.";
+            $msg .= "\nBạn có thể vào mục **Nhập hàng kho** để tạo phiếu nhập từ nhà cung cấp tương ứng.";
             return $msg;
         }
 
@@ -420,42 +475,32 @@ TEXT;
             $gross30 = number_format($data['gross_profit_30_days'], 0, ',', '.');
             $growthSign = $data['growth_rate_7_days'] >= 0 ? 'tăng +' : 'giảm ';
 
-            return "🤖 **AI Tổng Hợp Tình Hình Tài Chính & Kinh Doanh**:\n\n" .
-                   "📊 **Doanh thu hôm nay**: **{$todayRev} đ** ({$data['today_orders']} đơn bán)\n" .
-                   "📈 **Doanh thu 7 ngày gần nhất**: **{$rev7} đ** ({$growthSign}{$data['growth_rate_7_days']}% so với 7 ngày trước)\n" .
-                   "💰 **Tổng kết 30 ngày gần đây**:\n" .
-                   "- Doanh thu: **{$rev30} đ**\n" .
-                   "- Lợi nhuận gộp ước tính: **{$gross30} đ**\n" .
-                   "- Biên lợi nhuận gộp: **{$data['profit_margin_30_days']}%**\n\n" .
-                   "💡 **Đánh giá**: " . ($data['growth_rate_7_days'] >= 0
-                       ? "Cửa hàng đang duy trì đà tăng trưởng tích cực. Tiếp tục đẩy mạnh tích điểm khách hàng để tăng tỷ lệ quay lại!"
-                       : "Doanh thu tuần này có chiều hướng chững lại. Bạn nên xem xét các chương trình kích cầu hoặc ưu đãi ngày cuối tuần.");
+            return "**Tổng quan kết quả kinh doanh:**\n\n" .
+                   "- **Hôm nay**: {$todayRev} đ ({$data['today_orders']} đơn bán)\n" .
+                   "- **7 ngày gần nhất**: {$rev7} đ ({$growthSign}{$data['growth_rate_7_days']}% so với 7 ngày trước)\n" .
+                   "- **30 ngày qua**: Doanh thu {$rev30} đ, lợi nhuận gộp ước tính {$gross30} đ (Biên lợi nhuận: {$data['profit_margin_30_days']}%)\n\n" .
+                   "**Nhận xét:** " . ($data['growth_rate_7_days'] >= 0
+                       ? "Doanh số 7 ngày gần đây đang có xu hướng tăng trưởng so với tuần trước."
+                       : "Doanh số 7 ngày gần đây có phần chậm lại so với tuần trước, bạn có thể cân nhắc các mặt hàng ưu đãi ngày cuối tuần.");
         }
 
         // 5. Đề xuất giải pháp cải thiện kinh doanh (Business Improvement Recommendations)
-        if (str_contains($lower, 'cải thiện') || str_contains($lower, 'tăng doanh thu') || str_contains($lower, 'đề xuất') || str_contains($lower, 'chiến lược') || str_contains($lower, 'tư vấn')) {
-            $msg = "🤖 **AI Đề Xuất Chiến Lược Cải Thiện Hiệu Quả Kinh Doanh**:\n\n" .
-                   "Dựa trên dữ liệu thực tế tại cửa hàng **{$data['store_name']}**, AI đưa ra 4 hành động trọng tâm:\n\n" .
-                   "1. 🎯 **Tối ưu vòng quay vốn với Top sản phẩm bán chạy**:\n" .
-                   "   - Đảm bảo các mặt hàng chủ lực luôn sẵn có, đàm phán với nhà cung cấp để nhận chiết khấu thương mại khi nhập số lượng lớn.\n\n" .
-                   "2. 📦 **Giải phóng hàng tồn kho lâu ngày**:\n" .
-                   "   - Tránh để vốn bị chôn chân trong các mặt hàng chậm luân chuyển. Áp dụng ngay hình thức 'Mua 2 tặng 1' hoặc giảm giá xả hàng.\n\n" .
-                   "3. 🤝 **Chăm sóc và giữ chân khách hàng thân thiết**:\n" .
-                   "   - Hệ thống hiện ghi nhận **{$data['total_customers']} khách hàng** có điểm thưởng. Khuyến khích thu ngân nhắc khách đổi điểm trừ tiền tại quầy POS để gia tăng lòng trung thành.\n\n" .
-                   "4. ⏰ **Tối ưu hóa giỏ hàng bán lẻ (Up-selling)**:\n" .
-                   "   - Đặt các mặt hàng tiêu dùng nhỏ, giá rẻ (kẹo cao su, bật lửa, khăn ướt) ngay cạnh máy tính tiền để khuyến khích khách mua thêm.";
-            return $msg;
+        if (str_contains($lower, 'cải thiện') || str_contains($lower, 'tăng doanh thu') || str_contains($lower, 'đề xuất') || str_contains($lower, 'chiến lược') || str_contains($lower, 'tư vấn') || str_contains($lower, 'giải pháp')) {
+            return "**Gợi ý cải thiện hiệu quả kinh doanh cửa hàng:**\n\n" .
+                   "1. **Tập trung vào nhóm hàng chủ lực**: Đảm bảo nhóm 5 mặt hàng bán chạy luôn có đủ tồn kho và đàm phán giá nhập tốt hơn từ nhà cung cấp.\n" .
+                   "2. **Giải phóng hàng tồn đọng**: Tạo các chương trình combo hoặc giảm giá nhẹ các mặt hàng chậm luân chuyển để thu hồi vốn lưu động.\n" .
+                   "3. **Tận dụng dữ liệu khách hàng**: Hệ thống đang có {$data['total_customers']} khách hàng tích điểm, khuyến khích khách sử dụng điểm trừ tiền tại quầy để tăng tỷ lệ quay lại.\n" .
+                   "4. **Gia tăng giá trị giỏ hàng**: Đặt thêm các sản phẩm tiêu dùng nhỏ, tiện lợi tại quầy tính tiền để khách mua kèm khi thanh toán.";
         }
 
-        // 6. Trả lời mặc định & Hướng dẫn người dùng
-        return "🤖 **AI Trợ Lý Phân Tích Kinh Doanh**:\n\n" .
-               "Chào bạn! Tôi là Trợ lý AI chuyên phân tích dữ liệu kinh doanh của cửa hàng **{$data['store_name']}**.\n\n" .
-               "Bạn có thể hỏi tôi các câu hỏi như:\n" .
-               "🔹 *'Mặt hàng nào đang bán chạy nhất tháng này?'*\n" .
-               "🔹 *'Sản phẩm nào tồn kho lâu ngày cần xả hàng?'*\n" .
-               "🔹 *'Có sản phẩm nào sắp hết cần nhập thêm không?'*\n" .
-               "🔹 *'Báo cáo doanh thu và lợi nhuận 30 ngày qua thế nào?'*\n" .
-               "🔹 *'Đề xuất chiến lược giúp cửa hàng tăng doanh số?'*";
+        // 6. Trả lời mặc định thân thiện khi câu hỏi chưa rõ ý
+        return "Chào bạn, tôi chưa hiểu rõ câu hỏi này lắm. Bạn có thể hỏi tôi về các thông tin như:\n\n" .
+               "- *Doanh thu và lợi nhuận hôm nay hoặc 30 ngày qua*\n" .
+               "- *Sản phẩm nào bán chạy nhất tháng này?*\n" .
+               "- *Có mặt hàng nào sắp hết cần nhập kho không?*\n" .
+               "- *Sản phẩm nào tồn kho lâu chưa bán được?*\n" .
+               "- *Gợi ý giải pháp tăng doanh thu cửa hàng*\n\n" .
+               "Bạn muốn kiểm tra thông tin nào trước?";
     }
 
     /**

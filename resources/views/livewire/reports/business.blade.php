@@ -5,9 +5,9 @@
             <div class="col-md-3"><label class="form-label fw-semibold">Đến ngày</label><input type="date" wire:model.live="dateTo" class="form-control">@error('dateTo')<div class="text-danger small">{{ $message }}</div>@enderror</div>
             <div class="col-md-3"><label class="form-label fw-semibold">Ngưỡng tồn lâu</label><div class="input-group"><input type="number" min="7" wire:model.live.debounce.500ms="slowStockDays" class="form-control"><span class="input-group-text">ngày</span></div></div>
             <div class="col-md-3">
-                <a href="{{ route('ai.assistant') }}" class="btn btn-primary fw-semibold w-100 py-2 shadow-sm d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-stars text-warning"></i>
-                    <span>Nhờ AI Đánh Giá Báo Cáo</span>
+                <a href="{{ route('ai.assistant') }}" class="btn btn-outline-primary fw-medium w-100 py-2 d-flex align-items-center justify-content-center gap-1.5">
+                    <i class="bi bi-chat-text"></i>
+                    <span>Tư vấn phân tích số liệu</span>
                 </a>
             </div>
         </div>
