@@ -11,8 +11,7 @@
 - Nhập hàng, cập nhật giá vốn, xem và in phiếu nhập.
 - Tồn kho, cảnh báo sắp hết và sổ biến động kho.
 - Báo cáo doanh thu, lợi nhuận gộp, top bán chạy và hàng tồn lâu.
-- REST API đọc sản phẩm, tồn kho và báo cáo, xác thực bằng bearer token.
-- Trợ lý phân tích nằm trong module riêng và sẽ được tích hợp API AI sau.
+- Trợ lý AI phân tích kinh doanh tích hợp qua API (Google Gemini / OpenAI) và Local Intelligence Engine, tự động tổng hợp số liệu bán chạy, cảnh báo kho, nhận diện hàng tồn lâu và đề xuất chiến lược.
 
 ## Phân quyền
 
