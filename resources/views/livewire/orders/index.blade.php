@@ -1,7 +1,24 @@
 <div>
-    <div class="card card-custom p-3 mb-4 d-flex flex-row justify-content-between align-items-center">
-        <h5 class="fw-bold text-dark mb-0">Lịch sử Hóa đơn Bán hàng tại Quầy POS</h5>
-        <a href="{{ route('pos') }}" target="_blank" class="btn btn-success fw-bold"><i class="bi bi-calculator me-1"></i> Mở quầy bán hàng</a>
+    <div class="card card-custom p-3 mb-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Tìm theo mã hóa đơn, tên/SĐT khách...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select wire:model.live="paymentMethod" class="form-select">
+                    <option value="">-- Tất cả phương thức --</option>
+                    <option value="cash">Tiền mặt</option>
+                    <option value="transfer">Chuyển khoản</option>
+                    <option value="qr">Quét QR</option>
+                </select>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{{ route('pos') }}" target="_blank" class="btn btn-primary fw-semibold"><i class="bi bi-calculator me-1"></i> Mở quầy bán hàng POS</a>
+            </div>
+        </div>
     </div>
 
     <div class="card card-custom">
@@ -26,10 +43,12 @@
                             <td>{{ $ord->customer->name ?? 'Khách lẻ' }}</td>
                             <td>{{ $ord->user->name ?? 'Thu ngân' }}</td>
                             <td>
-                                @if($ord->payment_method == 'cash')
+                                @if($ord->payment_method === 'cash')
                                     <span class="badge bg-light text-dark border"><i class="bi bi-cash me-1"></i> Tiền mặt</span>
+                                @elseif($ord->payment_method === 'transfer')
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="bi bi-bank me-1"></i> Chuyển khoản</span>
                                 @else
-                                    <span class="badge bg-primary"><i class="bi bi-qr-code me-1"></i> Quét QR</span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="bi bi-qr-code me-1"></i> Quét QR</span>
                                 @endif
                             </td>
                             <td class="fw-bold text-dark">{{ number_format($ord->total_amount, 0, ',', '.') }} đ</td>
@@ -38,7 +57,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted py-4">Chưa có hóa đơn bán nào!</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy hóa đơn nào!</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -60,8 +79,17 @@
                 <div class="modal-body p-3">
                     <div class="mb-3 border-bottom pb-2 fs-7">
                         <div><strong>Ngày bán:</strong> {{ $selectedOrder->order_date->format('H:i:s d/m/Y') }}</div>
-                        <div><strong>Khách hàng:</strong> {{ $selectedOrder->customer->name ?? 'Khách lẻ' }}</div>
+                        <div><strong>Khách hàng:</strong> {{ $selectedOrder->customer->name ?? 'Khách lẻ' }} @if($selectedOrder->customer?->phone)({{ $selectedOrder->customer->phone }})@endif</div>
                         <div><strong>Thu ngân:</strong> {{ $selectedOrder->user->name ?? 'N/A' }}</div>
+                        <div><strong>Phương thức:</strong> 
+                            @if($selectedOrder->payment_method === 'cash')
+                                Tiền mặt
+                            @elseif($selectedOrder->payment_method === 'transfer')
+                                Chuyển khoản ngân hàng
+                            @else
+                                Quét mã QR
+                            @endif
+                        </div>
                     </div>
 
                     <h6 class="fw-bold text-dark fs-7">Danh sách sản phẩm mua:</h6>
@@ -80,19 +108,41 @@
                                     <td>{{ $item->product->name ?? 'N/A' }}</td>
                                     <td>{{ $item->quantity }}</td>
                                     <td>{{ number_format($item->price, 0, ',', '.') }}</td>
-                                    <td class="text-end fw-bold">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                    <td class="text-end fw-bold">{{ number_format($item->subtotal, 0, ',', '.') }} đ</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
 
-                    <div class="d-flex justify-content-between fw-bold fs-5 text-danger border-top pt-2">
-                        <span>TỔNG TIỀN:</span>
-                        <span>{{ number_format($selectedOrder->total_amount, 0, ',', '.') }} đ</span>
+                    <div class="fs-7 border-top pt-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Tổng tiền hàng:</span>
+                            <span>{{ number_format($selectedOrder->subtotal_amount, 0, ',', '.') }} đ</span>
+                        </div>
+                        @if($selectedOrder->discount_amount > 0)
+                            <div class="d-flex justify-content-between mb-1 text-danger">
+                                <span>Giảm giá / Dùng điểm:</span>
+                                <span>-{{ number_format($selectedOrder->discount_amount, 0, ',', '.') }} đ</span>
+                            </div>
+                        @endif
+                        <div class="d-flex justify-content-between fw-bold fs-6 text-dark border-top pt-1 mb-2">
+                            <span>Khách cần trả:</span>
+                            <span class="text-primary">{{ number_format($selectedOrder->total_amount, 0, ',', '.') }} đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1 text-muted fs-8">
+                            <span>Tiền khách đưa:</span>
+                            <span>{{ number_format($selectedOrder->paid_amount, 0, ',', '.') }} đ</span>
+                        </div>
+                        @if($selectedOrder->change_amount > 0)
+                            <div class="d-flex justify-content-between text-success fs-8">
+                                <span>Tiền thối lại:</span>
+                                <span>{{ number_format($selectedOrder->change_amount, 0, ',', '.') }} đ</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer me-1"></i> In hóa đơn</button>
+                    <button onclick="window.print()" class="btn btn-outline-primary"><i class="bi bi-printer me-1"></i> In hóa đơn</button>
                     <button wire:click="closeDetail" type="button" class="btn btn-secondary">Đóng</button>
                 </div>
             </div>
