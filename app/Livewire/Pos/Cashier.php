@@ -18,17 +18,29 @@ class Cashier extends Component
     private const POINT_VALUE = 1000;
 
     public string $search = '';
+
     public string $barcodeInput = '';
+
     public ?int $selectedCustomerId = null;
+
     public bool $usePoints = false;
+
     public int $pointsToRedeem = 0;
+
     public array $cart = [];
+
     public float $discount = 0;
+
     public float $paidAmount = 0;
+
     public bool $paidAmountManuallyEntered = false;
+
     public string $paymentMethod = 'cash';
+
     public string $note = '';
+
     public bool $showSuccessModal = false;
+
     public ?Order $lastCompletedOrder = null;
 
     public function mount(): void
@@ -49,6 +61,7 @@ class Cashier extends Component
 
         if (! $product) {
             session()->flash('error', 'Không tìm thấy sản phẩm có mã vạch: '.$this->barcodeInput);
+
             return;
         }
 
@@ -68,6 +81,7 @@ class Cashier extends Component
 
         if ($nextQuantity > $stock) {
             session()->flash('error', 'Sản phẩm "'.$product->name.'" không đủ tồn kho.');
+
             return;
         }
 
@@ -91,18 +105,21 @@ class Cashier extends Component
         }
         if ($qty <= 0) {
             $this->removeFromCart($productId);
+
             return;
         }
 
         $product = Product::where('store_id', auth()->user()->store_id)->with('inventory')->find($productId);
         if (! $product) {
             $this->removeFromCart($productId);
+
             return;
         }
 
         $stock = (int) ($product->inventory->quantity ?? 0);
         if ($qty > $stock) {
             session()->flash('error', 'Số lượng vượt quá tồn kho hiện tại ('.$stock.').');
+
             return;
         }
 
@@ -192,6 +209,7 @@ class Cashier extends Component
     {
         if (empty($this->cart)) {
             session()->flash('error', 'Giỏ hàng đang trống!');
+
             return;
         }
 
@@ -201,7 +219,7 @@ class Cashier extends Component
             'pointsToRedeem' => 'required|integer|min:0',
             'discount' => 'required|numeric|min:0',
             'paidAmount' => 'required|numeric|min:0',
-            'paymentMethod' => 'required|in:cash,transfer,qr',
+            'paymentMethod' => 'required|in:cash,transfer',
             'note' => 'nullable|string|max:1000',
         ]);
 

@@ -2,9 +2,10 @@
 
 namespace App\Livewire\Orders;
 
+use App\Models\Order;
+use App\Services\OrderCancellationService;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Order;
 
 class Index extends Component
 {
@@ -13,8 +14,15 @@ class Index extends Component
     protected string $paginationTheme = 'bootstrap';
 
     public string $search = '';
+
     public string $paymentMethod = '';
+
+    public string $status = '';
+
+    public string $cancellationReason = '';
+
     public ?int $viewOrderId = null;
+
     public ?Order $selectedOrder = null;
 
     public function updatingSearch(): void
@@ -27,10 +35,17 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingStatus(): void
+    {
+        $this->resetPage();
+    }
+
     public function showDetail(int $id)
     {
+        $this->reset('cancellationReason');
+        $this->resetValidation();
         $this->selectedOrder = Order::where('store_id', auth()->user()->store_id)
-            ->with(['items.product', 'customer', 'user'])
+            ->with(['items.product', 'customer', 'user', 'cancelledBy'])
             ->findOrFail($id);
         $this->viewOrderId = $id;
     }
@@ -39,6 +54,17 @@ class Index extends Component
     {
         $this->viewOrderId = null;
         $this->selectedOrder = null;
+        $this->reset('cancellationReason');
+        $this->resetValidation();
+    }
+
+    public function cancelOrder(int $id, OrderCancellationService $service): void
+    {
+        $this->selectedOrder = $service->cancel($id, auth()->user(), $this->cancellationReason);
+        $this->viewOrderId = $this->selectedOrder->id;
+        $this->reset('cancellationReason');
+        $this->resetValidation();
+        session()->flash('success', 'Đã hủy hóa đơn, hoàn tồn kho và đảo điểm thưởng.');
     }
 
     public function render()
@@ -50,16 +76,20 @@ class Index extends Component
 
         if (! empty($this->search)) {
             $query->where(function ($q) {
-                $q->where('order_code', 'like', '%' . $this->search . '%')
-                  ->orWhereHas('customer', function ($cq) {
-                      $cq->where('name', 'like', '%' . $this->search . '%')
-                         ->orWhere('phone', 'like', '%' . $this->search . '%');
-                  });
+                $q->where('order_code', 'like', '%'.$this->search.'%')
+                    ->orWhereHas('customer', function ($cq) {
+                        $cq->where('name', 'like', '%'.$this->search.'%')
+                            ->orWhere('phone', 'like', '%'.$this->search.'%');
+                    });
             });
         }
 
         if (! empty($this->paymentMethod)) {
             $query->where('payment_method', $this->paymentMethod);
+        }
+
+        if (in_array($this->status, ['completed', 'cancelled'], true)) {
+            $query->where('status', $this->status);
         }
 
         $orders = $query->orderBy('order_date', 'desc')->paginate(10);

@@ -50,13 +50,9 @@ class AiAssistantService
             : 0;
 
         // 3. Doanh thu & Lợi nhuận gộp 30 ngày qua
-        $profit30Days = OrderItem::query()
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->where('orders.store_id', $storeId)
-            ->where('orders.status', 'completed')
-            ->where('orders.order_date', '>=', Carbon::now()->subDays(30)->startOfDay())
-            ->selectRaw('COALESCE(SUM(order_items.subtotal), 0) as revenue, COALESCE(SUM(order_items.cost_price * order_items.quantity), 0) as cost')
-            ->first();
+        $profit30Days = app(BusinessReportService::class)->summary(
+            $storeId, Carbon::now()->subDays(30)->startOfDay(), Carbon::now()->endOfDay(),
+        );
 
         $revenue30 = (float) ($profit30Days->revenue ?? 0);
         $cost30 = (float) ($profit30Days->cost ?? 0);

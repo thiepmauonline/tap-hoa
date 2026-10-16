@@ -277,7 +277,7 @@ class DatabaseSeeder extends Seeder
                 'total_amount' => $amount,
                 'paid_amount' => $amount,
                 'change_amount' => 0,
-                'payment_method' => ($daysAgo % 3 == 0) ? 'qr' : 'cash',
+                'payment_method' => ($daysAgo % 3 == 0) ? 'transfer' : 'cash',
                 'status' => 'completed',
                 'note' => 'Đơn bán lẻ tại quầy',
             ]);

@@ -11,11 +11,19 @@
                 </a>
             </div>
         </div>
+        <div class="border-top mt-3 pt-3">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('reports.business.export', ['type' => 'revenue', 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-download me-1"></i> CSV doanh thu</a>
+                <a href="{{ route('reports.business.export', ['type' => 'products', 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-download me-1"></i> CSV top 10 bán chạy</a>
+                <a href="{{ route('reports.business.export', ['type' => 'inventory']) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-download me-1"></i> CSV tồn kho hiện tại</a>
+            </div>
+            <p class="small text-muted mt-2 mb-0">Doanh thu và lợi nhuận đã trừ giảm giá/đổi điểm, chỉ tính hóa đơn hoàn tất trong khoảng ngày đã chọn. Tồn kho xuất theo số lượng hiện tại.</p>
+        </div>
     </div>
 
     <div class="row g-3 mb-4">
         <div class="col-md-3"><div class="card card-custom p-3 h-100"><small class="text-muted">Doanh thu</small><div class="fs-4 fw-bold text-primary">{{ number_format($summary->revenue, 0, ',', '.') }} đ</div></div></div>
-        <div class="col-md-3"><div class="card card-custom p-3 h-100"><small class="text-muted">Lợi nhuận gộp</small><div class="fs-4 fw-bold text-success">{{ number_format($costAndGross->gross_profit, 0, ',', '.') }} đ</div></div></div>
+        <div class="col-md-3"><div class="card card-custom p-3 h-100"><small class="text-muted">Lợi nhuận gộp</small><div class="fs-4 fw-bold text-success">{{ number_format($summary->gross_profit, 0, ',', '.') }} đ</div></div></div>
         <div class="col-md-3"><div class="card card-custom p-3 h-100"><small class="text-muted">Số hóa đơn</small><div class="fs-4 fw-bold">{{ number_format($summary->order_count) }}</div></div></div>
         <div class="col-md-3"><div class="card card-custom p-3 h-100"><small class="text-muted">Trung bình hóa đơn</small><div class="fs-4 fw-bold">{{ number_format($summary->average_order, 0, ',', '.') }} đ</div></div></div>
     </div>

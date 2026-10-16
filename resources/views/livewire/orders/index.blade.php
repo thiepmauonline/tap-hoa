@@ -1,18 +1,24 @@
 <div>
     <div class="card card-custom p-3 mb-4">
         <div class="row g-2 align-items-center">
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
                     <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Tìm theo mã hóa đơn, tên/SĐT khách...">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select wire:model.live="paymentMethod" class="form-select">
                     <option value="">-- Tất cả phương thức --</option>
                     <option value="cash">Tiền mặt</option>
                     <option value="transfer">Chuyển khoản</option>
-                    <option value="qr">Quét QR</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select wire:model.live="status" class="form-select" aria-label="Trạng thái hóa đơn">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="completed">Hoàn tất</option>
+                    <option value="cancelled">Đã hủy</option>
                 </select>
             </div>
             <div class="col-md-4 text-md-end">
@@ -22,7 +28,7 @@
     </div>
 
     <div class="card card-custom">
-        <div class="card-body p-0">
+        <div class="card-body p-0 table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
@@ -32,6 +38,7 @@
                         <th>Thu ngân</th>
                         <th>Phương thức</th>
                         <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
                         <th class="text-end pe-3">Chi tiết</th>
                     </tr>
                 </thead>
@@ -48,16 +55,17 @@
                                 @elseif($ord->payment_method === 'transfer')
                                     <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="bi bi-bank me-1"></i> Chuyển khoản</span>
                                 @else
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="bi bi-qr-code me-1"></i> Quét QR</span>
+                                    <span class="badge bg-light text-dark border">Khác</span>
                                 @endif
                             </td>
                             <td class="fw-bold text-dark">{{ number_format($ord->total_amount, 0, ',', '.') }} đ</td>
+                            <td><span class="badge {{ $ord->status === 'cancelled' ? 'bg-danger' : 'bg-success' }}">{{ $ord->status === 'cancelled' ? 'Đã hủy' : 'Hoàn tất' }}</span></td>
                             <td class="text-end pe-3">
                                 <button wire:click="showDetail({{ $ord->id }})" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem đơn</button>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy hóa đơn nào!</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">Không tìm thấy hóa đơn nào!</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -70,13 +78,18 @@
     <!-- Modal Xem Chi tiết Hóa đơn -->
     @if($viewOrderId && $selectedOrder)
     <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Chi tiết Hóa đơn: {{ $selectedOrder->order_code }}</h5>
                     <button wire:click="closeDetail" type="button" class="btn-close"></button>
                 </div>
                 <div class="modal-body p-3">
+                    <div class="text-center mb-3">
+                        <strong>{{ auth()->user()->store->name }}</strong>
+                        @if(auth()->user()->store->address)<div class="small">{{ auth()->user()->store->address }}</div>@endif
+                        @if(auth()->user()->store->phone)<div class="small">ĐT: {{ auth()->user()->store->phone }}</div>@endif
+                    </div>
                     <div class="mb-3 border-bottom pb-2 fs-7">
                         <div><strong>Ngày bán:</strong> {{ $selectedOrder->order_date->format('H:i:s d/m/Y') }}</div>
                         <div><strong>Khách hàng:</strong> {{ $selectedOrder->customer->name ?? 'Khách lẻ' }} @if($selectedOrder->customer?->phone)({{ $selectedOrder->customer->phone }})@endif</div>
@@ -87,10 +100,19 @@
                             @elseif($selectedOrder->payment_method === 'transfer')
                                 Chuyển khoản ngân hàng
                             @else
-                                Quét mã QR
+                                Khác
                             @endif
                         </div>
                     </div>
+
+                    @if($selectedOrder->status === 'cancelled')
+                        <div class="alert alert-danger">
+                            <strong>HÓA ĐƠN ĐÃ HỦY</strong>
+                            <div>{{ $selectedOrder->cancelled_at?->format('H:i d/m/Y') }} · {{ $selectedOrder->cancelledBy->name ?? 'N/A' }}</div>
+                            <div>Lý do: {{ $selectedOrder->cancellation_reason }}</div>
+                            <div>Đã hoàn {{ number_format($selectedOrder->total_amount, 0, ',', '.') }} đ cho khách.</div>
+                        </div>
+                    @endif
 
                     <h6 class="fw-bold text-dark fs-7">Danh sách sản phẩm mua:</h6>
                     <table class="table table-sm border mb-3">
@@ -140,6 +162,17 @@
                             </div>
                         @endif
                     </div>
+                    @if(auth()->user()->isManager() && $selectedOrder->status === 'completed')
+                        <form class="d-print-none" wire:submit="cancelOrder({{ $selectedOrder->id }})" wire:confirm="Bạn xác nhận đã nhận lại toàn bộ hàng và hoàn tiền cho khách? Hóa đơn sẽ bị hủy, hoàn kho và đảo điểm thưởng.">
+                            <div class="border-top mt-3 pt-3">
+                                <p class="small text-muted">Chỉ hủy khi đã nhận lại toàn bộ hàng và hoàn {{ number_format($selectedOrder->total_amount, 0, ',', '.') }} đ cho khách. Thao tác không thể hoàn tác.</p>
+                                <label for="cancellationReason" class="form-label fw-semibold">Lý do hủy hóa đơn</label>
+                                <textarea id="cancellationReason" wire:model="cancellationReason" class="form-control" rows="2" maxlength="255" required placeholder="Ví dụ: Khách trả lại toàn bộ hàng"></textarea>
+                                @error('cancellationReason')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                <button type="submit" class="btn btn-outline-danger mt-2" wire:loading.attr="disabled" wire:target="cancelOrder">Hủy toàn bộ hóa đơn</button>
+                            </div>
+                        </form>
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button onclick="window.print()" class="btn btn-outline-primary"><i class="bi bi-printer me-1"></i> In hóa đơn</button>

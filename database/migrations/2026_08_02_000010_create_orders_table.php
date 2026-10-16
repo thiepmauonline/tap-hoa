@@ -29,7 +29,7 @@ return new class extends Migration
             $table->decimal('paid_amount', 15, 2)->default(0)->comment('Số tiền khách đưa cho thu ngân');
             $table->decimal('change_amount', 15, 2)->default(0)->comment('Số tiền thừa trả lại cho khách');
             
-            $table->string('payment_method', 20)->default('cash')->comment('Phương thức thanh toán: cash (Tiền mặt), transfer (Chuyển khoản ngân hàng), qr (Quét mã QR)');
+            $table->string('payment_method', 20)->default('cash')->comment('Phương thức thanh toán: cash (Tiền mặt), transfer (Chuyển khoản ngân hàng)');
             $table->string('status', 20)->default('completed')->comment('Trạng thái đơn hàng: completed (Hoàn tất), cancelled (Đã hủy đơn)');
             $table->text('note')->nullable()->comment('Ghi chú hóa đơn');
             

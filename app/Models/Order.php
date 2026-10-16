@@ -29,10 +29,14 @@ class Order extends Model
         'payment_method',
         'status',
         'note',
+        'cancelled_at',
+        'cancelled_by',
+        'cancellation_reason',
     ];
 
     protected $casts = [
         'order_date' => 'datetime',
+        'cancelled_at' => 'datetime',
         'subtotal_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'manual_discount_amount' => 'decimal:2',
@@ -62,5 +66,10 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 }

@@ -197,8 +197,8 @@
                 <input type="radio" class="btn-check" name="pm" id="pm_cash" value="cash" wire:model="paymentMethod">
                 <label class="btn btn-outline-primary btn-sm" for="pm_cash"><i class="bi bi-cash-stack"></i> Tiền mặt</label>
 
-                <input type="radio" class="btn-check" name="pm" id="pm_qr" value="qr" wire:model="paymentMethod">
-                <label class="btn btn-outline-primary btn-sm" for="pm_qr"><i class="bi bi-qr-code"></i> Quét QR</label>
+                <input type="radio" class="btn-check" name="pm" id="pm_transfer" value="transfer" wire:model="paymentMethod">
+                <label class="btn btn-outline-primary btn-sm" for="pm_transfer"><i class="bi bi-bank"></i> Chuyển khoản</label>
             </div>
 
             @if($errors->any())
@@ -296,7 +296,7 @@
         <div class="receipt-row receipt-total"><span>TỔNG CỘNG:</span><span>{{ number_format($lastCompletedOrder->total_amount, 0, ',', '.') }} đ</span></div>
         <div class="receipt-row"><span>Khách đưa:</span><span>{{ number_format($lastCompletedOrder->paid_amount, 0, ',', '.') }} đ</span></div>
         <div class="receipt-row"><span>Tiền thừa:</span><span>{{ number_format($lastCompletedOrder->change_amount, 0, ',', '.') }} đ</span></div>
-        <div class="receipt-row"><span>Thanh toán:</span><span>{{ ['cash' => 'Tiền mặt', 'transfer' => 'Chuyển khoản', 'qr' => 'Quét QR'][$lastCompletedOrder->payment_method] ?? $lastCompletedOrder->payment_method }}</span></div>
+        <div class="receipt-row"><span>Thanh toán:</span><span>{{ ['cash' => 'Tiền mặt', 'transfer' => 'Chuyển khoản'][$lastCompletedOrder->payment_method] ?? 'Khác' }}</span></div>
         @if($lastCompletedOrder->customer)
             <div class="receipt-line"></div>
             <div class="receipt-row"><span>Điểm vừa tích:</span><span>+{{ number_format($lastCompletedOrder->points_earned) }}</span></div>

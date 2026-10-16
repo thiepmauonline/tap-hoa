@@ -8,9 +8,12 @@
 - Phân quyền `owner`, `manager`, `staff` ở middleware phía server.
 - Quản lý sản phẩm, danh mục, nhà cung cấp, khách hàng và nhân viên.
 - POS bán hàng, quét mã vạch, giảm giá, thanh toán, tích điểm và in hóa đơn.
+- Hủy toàn bộ hóa đơn có lý do, hoàn kho và đảo điểm thưởng; lưu người hủy và thời gian hủy.
 - Nhập hàng, cập nhật giá vốn, xem và in phiếu nhập.
 - Tồn kho, cảnh báo sắp hết và sổ biến động kho.
 - Báo cáo doanh thu, lợi nhuận gộp, top bán chạy và hàng tồn lâu.
+- Xuất CSV doanh thu theo ngày, top 10 bán chạy và tồn kho hiện tại, hỗ trợ tiếng Việt trong Excel.
+- Cài đặt thông tin cửa hàng in trên hóa đơn và đổi mật khẩu tài khoản.
 - Trợ lý AI phân tích kinh doanh tích hợp qua API (Google Gemini / OpenAI) và Local Intelligence Engine, tự động tổng hợp số liệu bán chạy, cảnh báo kho, nhận diện hàng tồn lâu và đề xuất chiến lược.
 
 ## Phân quyền
@@ -21,8 +24,26 @@
 | Sản phẩm, kho, nhập hàng, nhà cung cấp | Có | Có | Không |
 | Báo cáo kinh doanh | Có | Có | Không |
 | Quản lý nhân viên | Có | Không | Không |
+| Hủy hóa đơn, xuất báo cáo CSV | Có | Có | Không |
+| Sửa thông tin cửa hàng | Có | Không | Không |
+| Đổi mật khẩu của mình | Có | Có | Có |
 
 Quyền được kiểm tra tại route/middleware; ẩn menu không được xem là cơ chế bảo mật.
+
+## Bán hàng và hủy hóa đơn
+
+- POS hỗ trợ tiền mặt và chuyển khoản. Thu ngân xác nhận đã nhận tiền trước khi hoàn tất bán hàng; hệ thống không tự đối soát ngân hàng.
+- Vào **Hóa đơn đã bán → Xem đơn** để hủy toàn bộ hóa đơn. Nhập lý do và xác nhận đã nhận lại hàng, hoàn đủ tiền khách thực trả (không bao gồm tiền thừa).
+- Hủy hóa đơn chạy trong một transaction: hoàn kho, hoàn điểm đã dùng, thu hồi điểm đã tích và đánh dấu đã hủy. Mỗi hóa đơn chỉ được hủy một lần; lịch sử gốc được giữ lại.
+- Nếu điểm đã tích được dùng ở hóa đơn khác khiến không đủ điểm thu hồi, thao tác hủy bị chặn và dữ liệu được giữ nguyên. Cần xử lý các hóa đơn đã dùng số điểm đó trước.
+- Báo cáo, API và ngữ cảnh số liệu của AI chỉ tính hóa đơn hoàn tất. Lợi nhuận gộp = doanh thu sau giảm giá/đổi điểm − giá vốn; chưa trừ chi phí vận hành.
+
+## Xuất báo cáo và cài đặt
+
+- Trong **Báo cáo kinh doanh**, chọn khoảng ngày rồi tải CSV doanh thu hoặc top 10 bán chạy. Doanh thu sản phẩm được phân bổ giảm giá/đổi điểm theo tỷ trọng tiền hàng.
+- CSV tồn kho là số lượng hiện tại tại thời điểm tải, không phải tồn kho lịch sử theo khoảng ngày. File có UTF-8 BOM cho Excel và giữ mã vạch có số 0 đầu.
+- Trong **Cài đặt & Tài khoản**, chủ cửa hàng sửa tên, địa chỉ, số điện thoại hiển thị trên hóa đơn. Mọi tài khoản đang hoạt động có thể đổi mật khẩu của mình sau khi nhập đúng mật khẩu hiện tại.
+- Khi cập nhật phiên bản có chức năng hủy hóa đơn, chạy `php artisan migrate`. Migration thêm thông tin hủy và chuyển nhãn QR ở hóa đơn cũ thành chuyển khoản, giữ nguyên số tiền và nội dung hóa đơn.
 
 ## Cài đặt
 

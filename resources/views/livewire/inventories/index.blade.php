@@ -74,7 +74,7 @@
                         <tr>
                             <td class="ps-3 text-nowrap">{{ $movement->created_at->format('H:i d/m/Y') }}</td>
                             <td class="fw-semibold">{{ $movement->product->name ?? 'Sản phẩm đã xóa' }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ ['purchase'=>'Nhập hàng','sale'=>'Bán hàng','adjustment'=>'Điều chỉnh','initial'=>'Khởi tạo'][$movement->type] ?? $movement->type }}</span></td>
+                            <td><span class="badge bg-light text-dark border">{{ ['purchase'=>'Nhập hàng','sale'=>'Bán hàng','sale_cancel'=>'Hoàn kho hủy đơn','adjustment'=>'Điều chỉnh','initial'=>'Khởi tạo'][$movement->type] ?? $movement->type }}</span></td>
                             <td class="text-end fw-bold {{ $movement->quantity_change >= 0 ? 'text-success' : 'text-danger' }}">{{ $movement->quantity_change >= 0 ? '+' : '' }}{{ number_format($movement->quantity_change) }}</td>
                             <td class="text-end">{{ number_format($movement->quantity_before) }} → {{ number_format($movement->quantity_after) }}</td>
                             <td>{{ $movement->user->name ?? 'Hệ thống' }}</td>

@@ -209,6 +209,9 @@
                 <i class="bi bi-person-gear"></i> Nhân viên & Phân quyền
             </a>
             @endif
+            <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
+                <i class="bi bi-gear"></i> Cài đặt & Tài khoản
+            </a>
         </div>
     </div>
 
@@ -243,7 +246,7 @@
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i> Hồ sơ tài khoản</a></li>
+                            <li><a class="dropdown-item" href="{{ route('settings.index') }}"><i class="bi bi-person me-2"></i> Cài đặt & Tài khoản</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
