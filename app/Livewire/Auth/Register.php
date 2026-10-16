@@ -2,28 +2,34 @@
 
 namespace App\Livewire\Auth;
 
-use Livewire\Component;
 use App\Models\Store;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class Register extends Component
 {
     public string $store_name = '';
+
     public string $name = '';
+
     public string $email = '';
+
     public string $phone = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
 
     protected array $rules = [
         'store_name' => 'required|string|max:255',
         'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email',
+        'email' => 'required|email|max:255|unique:users,email',
         'phone' => 'nullable|string|max:20',
-        'password' => 'required|string|min:6|confirmed',
+        'password' => 'required|string|min:8|max:255|confirmed',
     ];
 
     protected array $messages = [
@@ -32,7 +38,7 @@ class Register extends Component
         'email.required' => 'Vui lòng nhập email.',
         'email.unique' => 'Email này đã được sử dụng.',
         'password.required' => 'Vui lòng nhập mật khẩu.',
-        'password.min' => 'Mật khẩu phải tối thiểu 6 ký tự.',
+        'password.min' => 'Mật khẩu phải tối thiểu 8 ký tự.',
         'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
     ];
 
@@ -40,29 +46,33 @@ class Register extends Component
     {
         $this->validate();
 
-        // 1. Tạo cửa hàng mới
-        $store = Store::create([
-            'name' => $this->store_name,
-            'code' => Str::slug($this->store_name) . '-' . rand(100, 999),
-            'phone' => $this->phone,
-            'status' => 1,
-            'expired_at' => now()->addYear(),
-        ]);
+        $user = DB::transaction(function () {
+            $store = Store::create([
+                'name' => $this->store_name,
+                'code' => Str::uuid()->toString(),
+                'phone' => $this->phone,
+                'status' => 1,
+                'expired_at' => now()->addYear(),
+            ]);
 
-        // 2. Tạo tài khoản chủ cửa hàng
-        $user = User::create([
-            'store_id' => $store->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'password' => Hash::make($this->password),
-            'role' => 'owner',
-            'status' => 1,
-        ]);
+            // 2. Tạo tài khoản chủ cửa hàng
+            return User::create([
+                'store_id' => $store->id,
+                'name' => $this->name,
+                'email' => $this->email,
+                'phone' => $this->phone,
+                'password' => Hash::make($this->password),
+                'role' => 'owner',
+                'status' => 1,
+            ]);
+        });
 
         Auth::login($user);
+        session()->regenerate();
+        $this->reset('password', 'password_confirmation');
 
         session()->flash('success', 'Đăng ký cửa hàng mới thành công!');
+
         return redirect()->route('dashboard');
     }
 

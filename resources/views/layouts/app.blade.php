@@ -200,9 +200,11 @@
             </a>
 
             <div class="nav-heading">Trợ lý & Hệ thống</div>
+            @if(auth()->user()->isManager())
             <a href="{{ route('ai.assistant') }}" class="nav-link {{ request()->routeIs('ai.*') ? 'active' : '' }}">
                 <i class="bi bi-robot"></i> Trợ lý phân tích
             </a>
+            @endif
 
             @if(auth()->user()->isOwner())
             <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">

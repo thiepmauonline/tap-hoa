@@ -2,42 +2,55 @@
 
 namespace App\Livewire\Products;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
-use App\Models\Product;
 use App\Models\Category;
-use App\Models\Supplier;
 use App\Models\Inventory;
-use App\Models\OrderItem;
-use App\Models\PurchaseOrderItem;
 use App\Models\InventoryMovement;
+use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\PurchaseOrderItem;
+use App\Models\Supplier;
 use App\Services\InventoryService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     protected string $paginationTheme = 'bootstrap';
 
     public string $search = '';
+
     public string $selectedCategory = '';
 
     // Form fields
     public bool $isModalOpen = false;
+
     public ?int $productId = null;
+
     public string $name = '';
+
     public ?int $category_id = null;
+
     public ?int $supplier_id = null;
+
     public string $barcode = '';
+
     public string $unit = 'gói';
+
     public $cost_price = 0;
+
     public $sale_price = 0;
-    public int $min_stock = 5;
-    public int $initial_stock = 0;
+
+    public $min_stock = 5;
+
+    public $initial_stock = 0;
+
     public $image = null;
+
     public ?string $currentImage = null;
 
     protected function rules(): array
@@ -48,12 +61,22 @@ class Index extends Component
             'supplier_id' => ['nullable', 'integer', Rule::exists('suppliers', 'id')->where('store_id', auth()->user()->store_id)],
             'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->where('store_id', auth()->user()->store_id)->ignore($this->productId)],
             'unit' => 'required|string|max:50',
-            'cost_price' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0',
-            'min_stock' => 'required|integer|min:0',
-            'initial_stock' => 'nullable|integer|min:0',
+            'cost_price' => 'required|numeric|min:0|max:9999999999999.99',
+            'sale_price' => 'required|numeric|min:0|max:9999999999999.99',
+            'min_stock' => 'required|integer|min:0|max:2147483647',
+            'initial_stock' => 'required|integer|min:0|max:2147483647',
             'image' => 'nullable|image|max:2048',
         ];
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSelectedCategory(): void
+    {
+        $this->resetPage();
     }
 
     public function openModal()
@@ -119,7 +142,7 @@ class Index extends Component
         $imagePath = $this->currentImage;
         if ($this->image) {
             $stored = $this->image->store('products', 'public');
-            $imagePath = 'storage/' . $stored;
+            $imagePath = 'storage/'.$stored;
         }
 
         if ($this->productId) {
@@ -136,48 +159,33 @@ class Index extends Component
                 'image' => $imagePath,
             ]);
 
-            // Cập nhật tồn kho
-            $inventory = Inventory::firstOrCreate(
-                ['store_id' => $storeId, 'product_id' => $product->id],
-                ['quantity' => 0]
-            );
-            $change = $this->initial_stock - (int) $inventory->quantity;
-            if ($change !== 0) {
-                DB::transaction(fn () => app(InventoryService::class)->adjust(
-                    (int) $storeId,
-                    (int) $product->id,
-                    $change,
-                    'adjustment',
-                    auth()->id(),
-                    note: 'Điều chỉnh tồn kho từ màn hình sản phẩm',
-                ));
-            }
-
             session()->flash('success', 'Cập nhật sản phẩm thành công!');
         } else {
-            $product = Product::create([
-                'store_id' => $storeId,
-                'name' => $this->name,
-                'category_id' => $this->category_id ?: null,
-                'supplier_id' => $this->supplier_id ?: null,
-                'barcode' => $this->barcode ?: null,
-                'unit' => $this->unit,
-                'cost_price' => $this->cost_price,
-                'sale_price' => $this->sale_price,
-                'min_stock' => $this->min_stock,
-                'image' => $imagePath,
-                'status' => 1,
-            ]);
+            DB::transaction(function () use ($storeId, $imagePath) {
+                $product = Product::create([
+                    'store_id' => $storeId,
+                    'name' => $this->name,
+                    'category_id' => $this->category_id ?: null,
+                    'supplier_id' => $this->supplier_id ?: null,
+                    'barcode' => $this->barcode ?: null,
+                    'unit' => $this->unit,
+                    'cost_price' => $this->cost_price,
+                    'sale_price' => $this->sale_price,
+                    'min_stock' => $this->min_stock,
+                    'image' => $imagePath,
+                    'status' => 1,
+                ]);
 
-            // Tạo tồn kho ban đầu
-            DB::transaction(fn () => app(InventoryService::class)->adjust(
-                (int) $storeId,
-                (int) $product->id,
-                $this->initial_stock,
-                'initial',
-                auth()->id(),
-                note: 'Tồn kho ban đầu khi tạo sản phẩm',
-            ));
+                app(InventoryService::class)->adjust(
+                    (int) $storeId,
+                    (int) $product->id,
+                    (int) $this->initial_stock,
+                    'initial',
+                    auth()->id(),
+                    note: 'Tồn kho ban đầu khi tạo sản phẩm',
+                );
+
+            });
 
             session()->flash('success', 'Thêm sản phẩm mới thành công!');
         }
@@ -192,6 +200,7 @@ class Index extends Component
         if (OrderItem::where('product_id', $id)->exists() || PurchaseOrderItem::where('product_id', $id)->exists()) {
             $product->update(['status' => 0]);
             session()->flash('success', 'Sản phẩm đã có lịch sử giao dịch nên được chuyển sang ngừng kinh doanh thay vì xóa.');
+
             return;
         }
 
@@ -209,14 +218,14 @@ class Index extends Component
         $query = Product::where('store_id', $storeId)
             ->with(['category', 'supplier', 'inventory']);
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('barcode', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('barcode', 'like', '%'.$this->search.'%');
             });
         }
 
-        if (!empty($this->selectedCategory)) {
+        if (! empty($this->selectedCategory)) {
             $query->where('category_id', $this->selectedCategory);
         }
 

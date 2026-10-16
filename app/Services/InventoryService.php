@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Inventory;
 use App\Models\InventoryMovement;
+use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class InventoryService
@@ -18,47 +20,48 @@ class InventoryService
         ?int $referenceId = null,
         ?string $note = null,
     ): Inventory {
-        $inventory = Inventory::query()
-            ->where('store_id', $storeId)
-            ->where('product_id', $productId)
-            ->lockForUpdate()
-            ->first();
+        return DB::transaction(function () use ($storeId, $productId, $quantityChange, $type, $userId, $referenceType, $referenceId, $note) {
+            if (! Product::where('store_id', $storeId)->whereKey($productId)->exists()) {
+                throw ValidationException::withMessages(['cart' => 'Sản phẩm không thuộc cửa hàng hiện tại.']);
+            }
+            Inventory::firstOrCreate(
+                ['store_id' => $storeId, 'product_id' => $productId],
+                ['quantity' => 0],
+            );
+            $inventory = Inventory::where('store_id', $storeId)->where('product_id', $productId)
+                ->lockForUpdate()->firstOrFail();
 
-        if (! $inventory) {
-            $inventory = Inventory::create([
+            $before = (int) $inventory->quantity;
+            $after = $before + $quantityChange;
+
+            if ($after > 2147483647) {
+                throw ValidationException::withMessages(['cart' => 'Số lượng tồn kho vượt quá giới hạn cho phép.']);
+            }
+            if ($after < 0) {
+                throw ValidationException::withMessages([
+                    'cart' => 'Tồn kho đã thay đổi và không còn đủ để hoàn tất giao dịch.',
+                ]);
+            }
+
+            $inventory->update([
+                'quantity' => $after,
+                'last_imported_at' => $type === 'purchase' ? now() : $inventory->last_imported_at,
+            ]);
+
+            InventoryMovement::create([
                 'store_id' => $storeId,
                 'product_id' => $productId,
-                'quantity' => 0,
+                'user_id' => $userId,
+                'type' => $type,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'quantity_change' => $quantityChange,
+                'quantity_before' => $before,
+                'quantity_after' => $after,
+                'note' => $note,
             ]);
-        }
 
-        $before = (int) $inventory->quantity;
-        $after = $before + $quantityChange;
-
-        if ($after < 0) {
-            throw ValidationException::withMessages([
-                'cart' => 'Tồn kho đã thay đổi và không còn đủ để hoàn tất giao dịch.',
-            ]);
-        }
-
-        $inventory->update([
-            'quantity' => $after,
-            'last_imported_at' => $type === 'purchase' ? now() : $inventory->last_imported_at,
-        ]);
-
-        InventoryMovement::create([
-            'store_id' => $storeId,
-            'product_id' => $productId,
-            'user_id' => $userId,
-            'type' => $type,
-            'reference_type' => $referenceType,
-            'reference_id' => $referenceId,
-            'quantity_change' => $quantityChange,
-            'quantity_before' => $before,
-            'quantity_after' => $after,
-            'note' => $note,
-        ]);
-
-        return $inventory->refresh();
+            return $inventory->refresh();
+        }, 3);
     }
 }

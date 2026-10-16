@@ -110,6 +110,7 @@
                 </div>
                 <div class="modal-body">
                     <form wire:submit.prevent="save">
+                        @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Tên Sản phẩm <span class="text-danger">*</span></label>
                             <input type="text" wire:model="name" class="form-control @error('name') is-invalid @enderror" placeholder="Vd: Nước ngọt Coca-Cola 320ml">
@@ -199,8 +200,9 @@
                                 <input type="number" wire:model="min_stock" class="form-control" placeholder="5">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Số lượng tồn kho hiện tại</label>
-                                <input type="number" wire:model="initial_stock" class="form-control" placeholder="100">
+                                <label class="form-label fw-semibold">{{ $productId ? 'Tồn kho khi mở biểu mẫu' : 'Số lượng tồn kho ban đầu' }}</label>
+                                <input type="number" wire:model="initial_stock" class="form-control" placeholder="100" min="0" @readonly($productId)>
+                                @if($productId)<div class="form-text">Để thay đổi số lượng, dùng mục <a href="{{ route('inventories.index') }}">Tồn kho & Cảnh báo</a>.</div>@endif
                             </div>
                         </div>
 

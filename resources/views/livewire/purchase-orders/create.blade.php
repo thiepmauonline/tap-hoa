@@ -33,6 +33,7 @@
         </div>
 
         <!-- Bảng danh sách hàng nhập -->
+        @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
         <div class="table-responsive mb-4">
             <table class="table table-bordered align-middle">
                 <thead class="table-dark">

@@ -2,10 +2,9 @@
 
 namespace App\Livewire\Reports;
 
-use App\Models\OrderItem;
-use App\Models\Product;
 use App\Services\BusinessReportService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 
 class Business extends Component
@@ -14,7 +13,7 @@ class Business extends Component
 
     public string $dateTo;
 
-    public int $slowStockDays = 60;
+    public ?int $slowStockDays = 60;
 
     public function mount(): void
     {
@@ -24,11 +23,27 @@ class Business extends Component
 
     public function render(BusinessReportService $reports)
     {
-        $this->validate([
-            'dateFrom' => 'required|date',
-            'dateTo' => 'required|date|after_or_equal:dateFrom',
+        $validator = Validator::make($this->only(['dateFrom', 'dateTo', 'slowStockDays']), [
+            'dateFrom' => 'required|date_format:Y-m-d',
+            'dateTo' => 'required|date_format:Y-m-d|after_or_equal:dateFrom',
             'slowStockDays' => 'required|integer|min:7|max:3650',
+        ], [
+            'dateFrom.required' => 'Vui lòng chọn ngày bắt đầu.',
+            'dateFrom.date_format' => 'Ngày bắt đầu không hợp lệ.',
+            'dateTo.required' => 'Vui lòng chọn ngày kết thúc.',
+            'dateTo.date_format' => 'Ngày kết thúc không hợp lệ.',
+            'dateTo.after_or_equal' => 'Ngày kết thúc phải từ ngày bắt đầu trở đi.',
+            'slowStockDays.required' => 'Vui lòng nhập ngưỡng tồn lâu.',
+            'slowStockDays.integer' => 'Ngưỡng tồn lâu phải là số nguyên.',
+            'slowStockDays.min' => 'Ngưỡng tồn lâu phải từ 7 ngày.',
+            'slowStockDays.max' => 'Ngưỡng tồn lâu không được quá 3650 ngày.',
         ]);
+        if ($validator->fails()) {
+            $this->setErrorBag($validator->errors());
+
+            return view('livewire.reports.business')->layout('layouts.app', ['headerTitle' => 'Báo cáo Kinh doanh']);
+        }
+        $this->resetValidation();
 
         $storeId = (int) auth()->user()->store_id;
         $from = Carbon::parse($this->dateFrom)->startOfDay();
@@ -38,30 +53,7 @@ class Business extends Component
         $dailyRevenue = $reports->dailyRevenue($storeId, $from, $to);
         $topProducts = $reports->topProducts($storeId, $from, $to);
 
-        $lastSoldDates = OrderItem::query()
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->where('orders.store_id', $storeId)
-            ->where('orders.status', 'completed')
-            ->groupBy('order_items.product_id')
-            ->selectRaw('order_items.product_id, MAX(orders.order_date) as last_sold_at')
-            ->get()
-            ->pluck('last_sold_at', 'product_id');
-
-        $cutoff = now()->subDays($this->slowStockDays);
-        $slowStockProducts = Product::where('store_id', $storeId)
-            ->where('status', 1)
-            ->whereHas('inventory', fn ($query) => $query->where('quantity', '>', 0))
-            ->with(['inventory', 'category'])
-            ->get()
-            ->map(function (Product $product) use ($lastSoldDates) {
-                $lastSold = $lastSoldDates->get($product->id);
-                $product->last_sold_at = $lastSold ? Carbon::parse($lastSold) : null;
-
-                return $product;
-            })
-            ->filter(fn (Product $product) => ! $product->last_sold_at || $product->last_sold_at->lt($cutoff))
-            ->sortBy(fn (Product $product) => $product->last_sold_at?->timestamp ?? 0)
-            ->take(20);
+        $slowStockProducts = $reports->slowStock($storeId, $this->slowStockDays);
 
         return view('livewire.reports.business', compact(
             'summary', 'dailyRevenue', 'topProducts', 'slowStockProducts'

@@ -4,11 +4,14 @@ namespace App\Livewire\Ai;
 
 use App\Models\AiLog;
 use App\Services\AiAssistantService;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class Assistant extends Component
 {
     public string $userQuestion = '';
+
     public bool $isAnalyzing = false;
 
     protected array $rules = [
@@ -17,19 +20,28 @@ class Assistant extends Component
 
     public function ask(AiAssistantService $aiService): void
     {
+        abort_unless(auth()->user()->isManager(), 403);
+        $this->userQuestion = trim($this->userQuestion);
         $this->validate();
+        $key = 'ai:'.auth()->id();
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            throw ValidationException::withMessages(['userQuestion' => 'Bạn đã gửi nhiều câu hỏi liên tiếp. Vui lòng đợi một phút rồi thử lại.']);
+        }
+        RateLimiter::hit($key, 60);
 
         $question = trim($this->userQuestion);
-        $this->userQuestion = '';
         $this->isAnalyzing = true;
 
         $storeId = (int) auth()->user()->store_id;
         $userId = (int) auth()->id();
 
         // Xử lý thông qua AiAssistantService (Gemini API -> OpenAI -> Local Fallback)
-        $aiService->ask($question, $storeId, $userId);
-
-        $this->isAnalyzing = false;
+        try {
+            $aiService->ask($question, $storeId, $userId);
+            $this->userQuestion = '';
+        } finally {
+            $this->isAnalyzing = false;
+        }
     }
 
     public function selectPrompt(string $prompt): void
@@ -39,6 +51,7 @@ class Assistant extends Component
 
     public function clearHistory(): void
     {
+        abort_unless(auth()->user()->isManager(), 403);
         $storeId = (int) auth()->user()->store_id;
         AiLog::where('store_id', $storeId)->delete();
         session()->flash('success', 'Đã dọn dẹp lịch sử hỏi đáp AI thành công.');
@@ -46,13 +59,14 @@ class Assistant extends Component
 
     public function render(AiAssistantService $aiService)
     {
+        abort_unless(auth()->user()->isManager(), 403);
         $storeId = (int) auth()->user()->store_id;
 
         $logs = AiLog::where('store_id', $storeId)
             ->with('user')
-            ->orderBy('created_at', 'asc')
+            ->orderByDesc('id')
             ->take(50)
-            ->get();
+            ->get()->reverse()->values();
 
         $totalTokens = AiLog::where('store_id', $storeId)->sum('tokens_used');
 

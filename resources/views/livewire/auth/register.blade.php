@@ -29,7 +29,7 @@
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label class="form-label fw-semibold">Mật khẩu</label>
-                <input type="password" wire:model="password" class="form-control @error('password') is-invalid @enderror" placeholder="••••••••">
+                <input type="password" wire:model="password" minlength="8" maxlength="255" autocomplete="new-password" class="form-control @error('password') is-invalid @enderror" placeholder="••••••••">
                 @error('password') <div class="text-danger fs-7 mt-1">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-6 mb-3">

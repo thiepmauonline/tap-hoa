@@ -11,11 +11,17 @@ use Livewire\Component;
 class Index extends Component
 {
     public string $name = '';
+
     public string $email = '';
+
     public string $phone = '';
+
     public string $password = '';
+
     public string $role = 'staff';
+
     public ?int $userId = null;
+
     public bool $isModalOpen = false;
 
     public function openModal(): void
@@ -53,7 +59,7 @@ class Index extends Component
     {
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($this->userId)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->userId)],
             'phone' => 'nullable|string|max:20',
             'password' => [$this->userId ? 'nullable' : 'required', 'string', 'min:8'],
             'role' => 'required|in:manager,staff',

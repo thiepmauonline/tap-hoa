@@ -2,25 +2,34 @@
 
 namespace Database\Seeders;
 
-use App\Models\Store;
-use App\Models\User;
+use App\Models\AiLog;
 use App\Models\Category;
-use App\Models\Supplier;
 use App\Models\Customer;
-use App\Models\Product;
-use App\Models\Inventory;
+use App\Models\CustomerPointTransaction;
+use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use App\Models\AiLog;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Store;
+use App\Models\Supplier;
+use App\Models\User;
+use App\Services\AiAssistantService;
+use App\Services\InventoryService;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
+    {
+        DB::transaction(fn () => $this->seedStores());
+    }
+
+    private function seedStores(): void
     {
         // -------------------------------------------------------------------------
         // 1. TẠO CỬA HÀNG 1: TẠP HÓA HẠNH PHÚC (Cửa hàng chính)
@@ -211,12 +220,8 @@ class DatabaseSeeder extends Seeder
                 'status' => 1,
             ]));
 
-            Inventory::create([
-                'store_id' => $store1->id,
-                'product_id' => $product->id,
-                'quantity' => $qty,
-                'last_imported_at' => Carbon::now()->subDays(rand(2, 15)),
-            ]);
+            $product->forceFill(['created_at' => Carbon::now()->subDays(60)])->save();
+            $this->moveStock($product, $qty, 'initial', $owner1, Carbon::now()->subDays(60));
 
             $createdProducts[$product->barcode] = $product;
         }
@@ -224,10 +229,10 @@ class DatabaseSeeder extends Seeder
         // 8. Tạo Phiếu Nhập Hàng Mẫu
         $po1 = PurchaseOrder::create([
             'store_id' => $store1->id,
-            'po_code' => 'PN-' . date('Ymd') . '-0001',
+            'po_code' => 'PN-'.Carbon::now()->subDays(8)->format('Ymd').'-0001',
             'supplier_id' => $supCoca->id,
             'user_id' => $owner1->id,
-            'purchase_date' => Carbon::now()->subDays(5),
+            'purchase_date' => Carbon::now()->subDays(8),
             'total_amount' => 1700000,
             'discount_amount' => 50000,
             'paid_amount' => 1650000,
@@ -246,83 +251,60 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // 9. Tạo Hóa Đơn Bán Hàng 7 Ngày Gần Đây (Đường biểu đồ Doanh thu ấn tượng)
-        $pCoca = $createdProducts['8935001100018'] ?? null;
-        $pHaoHao = $createdProducts['8934567890123'] ?? null;
-        $pCosy = $createdProducts['8938888777666'] ?? null;
-        $pSunsilk = $createdProducts['8934777888999'] ?? null;
+        $coca = $createdProducts['8935001100018'];
+        $this->moveStock($coca, 200, 'purchase', $owner1, $po1->purchase_date, 'purchase_order', $po1->id);
 
-        // Dữ liệu 7 ngày gần đây
-        $salesPattern = [
-            6 => 1450000, // 6 ngày trước
-            5 => 980000,  // 5 ngày trước
-            4 => 2100000, // 4 ngày trước
-            3 => 1750000, // 3 ngày trước
-            2 => 3200000, // 2 ngày trước
-            1 => 2400000, // 1 ngày trước
-            0 => 1250000, // Hôm nay
-        ];
-
-        foreach ($salesPattern as $daysAgo => $amount) {
-            $orderDate = Carbon::now()->subDays($daysAgo)->setHour(rand(9, 19));
-
-            $ord = Order::create([
+        // Each invoice is derived from real quantities and also updates stock and points.
+        $haoHao = $createdProducts['8934567890123'];
+        $salesPattern = [6 => [10, 40], 5 => [8, 30], 4 => [12, 45], 3 => [11, 35], 2 => [20, 50], 1 => [15, 40], 0 => [9, 25]];
+        foreach ($salesPattern as $daysAgo => [$cocaQuantity, $noodleQuantity]) {
+            $orderDate = Carbon::today()->subDays($daysAgo)->setHour(9);
+            $amount = $cocaQuantity * (float) $coca->sale_price + $noodleQuantity * (float) $haoHao->sale_price;
+            $customer = $daysAgo % 2 === 0 ? $c1 : $c2;
+            $earned = (int) floor($amount / 10000);
+            $order = Order::create([
                 'store_id' => $store1->id,
-                'order_code' => 'HD-' . $orderDate->format('Ymd') . '-' . sprintf('%04d', rand(1, 999)),
-                'customer_id' => ($daysAgo % 2 == 0) ? $c1->id : $c2->id,
+                'order_code' => 'HD-'.$orderDate->format('Ymd').'-DEMO',
+                'customer_id' => $customer->id,
                 'user_id' => $staff1->id,
                 'order_date' => $orderDate,
                 'subtotal_amount' => $amount,
                 'discount_amount' => 0,
+                'points_earned' => $earned,
                 'total_amount' => $amount,
                 'paid_amount' => $amount,
                 'change_amount' => 0,
-                'payment_method' => ($daysAgo % 3 == 0) ? 'transfer' : 'cash',
+                'payment_method' => $daysAgo % 3 === 0 ? 'transfer' : 'cash',
                 'status' => 'completed',
                 'note' => 'Đơn bán lẻ tại quầy',
             ]);
-
-            if ($pCoca && $pHaoHao) {
+            foreach ([[$coca, $cocaQuantity], [$haoHao, $noodleQuantity]] as [$product, $quantity]) {
                 OrderItem::create([
-                    'order_id' => $ord->id,
-                    'product_id' => $pCoca->id,
-                    'quantity' => rand(5, 20),
-                    'cost_price' => $pCoca->cost_price,
-                    'price' => $pCoca->sale_price,
-                    'subtotal' => $amount * 0.4,
+                    'order_id' => $order->id, 'product_id' => $product->id, 'quantity' => $quantity,
+                    'cost_price' => $product->cost_price, 'price' => $product->sale_price,
+                    'subtotal' => $quantity * (float) $product->sale_price,
                 ]);
-
-                OrderItem::create([
-                    'order_id' => $ord->id,
-                    'product_id' => $pHaoHao->id,
-                    'quantity' => rand(20, 50),
-                    'cost_price' => $pHaoHao->cost_price,
-                    'price' => $pHaoHao->sale_price,
-                    'subtotal' => $amount * 0.6,
-                ]);
+                $this->moveStock($product, -$quantity, 'sale', $staff1, $orderDate, 'order', $order->id);
             }
+            $before = (int) $customer->point;
+            $customer->increment('point', $earned);
+            CustomerPointTransaction::create([
+                'store_id' => $store1->id, 'customer_id' => $customer->id, 'order_id' => $order->id,
+                'user_id' => $staff1->id, 'type' => 'earn', 'points_change' => $earned,
+                'points_before' => $before, 'points_after' => $before + $earned, 'note' => 'Tích điểm từ hóa đơn mẫu',
+            ]);
         }
 
-        // 10. Tạo Lịch sử Hỏi đáp Mẫu (AI Logs)
-        AiLog::create([
-            'store_id' => $store1->id,
-            'user_id' => $owner1->id,
-            'question' => 'Mặt hàng nào bán chạy nhất tuần này?',
-            'answer' => "**Top sản phẩm bán chạy trong tuần:**\n\n1. **Mì Hảo Hảo Tôm Chua Cay 75g**: Đã bán 210 gói (Doanh số: 945.000 đ)\n2. **Nước ngọt Coca-Cola Lon 320ml**: Đã bán 85 lon (Doanh số: 935.000 đ)\n3. **Bánh Cosy Mè Dừa 288g**: Đã bán 12 hộp (Doanh số: 504.000 đ)\n\n**Gợi ý vận hành:** Mì Hảo Hảo có lượng tiêu thụ nhanh và đều, nên duy trì tồn kho tối thiểu từ 60 gói trở lên.",
-            'type' => 'analysis',
-            'tokens_used' => 280,
-            'created_at' => Carbon::now()->subHours(1),
-        ]);
-
-        AiLog::create([
-            'store_id' => $store1->id,
-            'user_id' => $owner1->id,
-            'question' => 'Có sản phẩm nào trong kho sắp hết cần nhập thêm không?',
-            'answer' => "**Cảnh báo tồn kho & Kế hoạch nhập hàng:**\n\nHệ thống ghi nhận 2 sản phẩm chạm hoặc dưới mức tồn kho tối thiểu:\n- **Bim Bim Oishi Vị Tôm Cay 40g**: Còn 8 gói (Mức tối thiểu: 20 gói)\n- **Nước mắm Nam Ngư Đệ Nhị 500ml**: Còn 4 chai (Mức tối thiểu: 12 chai)\n\nBạn có thể vào mục **Nhập hàng kho** để tạo phiếu nhập từ nhà cung cấp tương ứng.",
-            'type' => 'restock',
-            'tokens_used' => 310,
-            'created_at' => Carbon::now()->subMinutes(15),
-        ]);
+        // Sample answers are generated from the same real data, without calling an external API.
+        $ai = app(AiAssistantService::class);
+        $context = $ai->buildStoreContext($store1->id);
+        foreach ([['Mặt hàng nào bán chạy trong 30 ngày qua?', 'analysis'], ['Có sản phẩm nào sắp hết kho?', 'restock']] as [$question, $type]) {
+            AiLog::create([
+                'store_id' => $store1->id, 'user_id' => $owner1->id, 'question' => $question,
+                'answer' => $ai->generateLocalAnalysis($question, $store1->id, $context),
+                'type' => $type, 'tokens_used' => 0,
+            ]);
+        }
 
         // -------------------------------------------------------------------------
         // 2. TẠO CỬA HÀNG 2: TẠP HÓA MINH ANH (Đà Nẵng) - Đảm bảo kiểm thử Multi-Tenant
@@ -345,5 +327,15 @@ class DatabaseSeeder extends Seeder
             'role' => 'owner',
             'status' => 1,
         ]);
+    }
+
+    private function moveStock(Product $product, int $quantity, string $type, User $actor, Carbon $at, ?string $referenceType = null, ?int $referenceId = null): void
+    {
+        $inventory = app(InventoryService::class)->adjust($product->store_id, $product->id, $quantity, $type, $actor->id, $referenceType, $referenceId, 'Dữ liệu mẫu');
+        InventoryMovement::where('product_id', $product->id)->latest('id')->firstOrFail()
+            ->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
+        if (in_array($type, ['initial', 'purchase'], true)) {
+            $inventory->update(['last_imported_at' => $at]);
+        }
     }
 }

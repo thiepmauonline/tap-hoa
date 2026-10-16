@@ -2,13 +2,12 @@
 
 namespace App\Livewire\Inventories;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Inventory;
-use App\Models\Product;
 use App\Models\InventoryMovement;
 use App\Services\InventoryService;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
@@ -17,13 +16,28 @@ class Index extends Component
     protected string $paginationTheme = 'bootstrap';
 
     public string $search = '';
+
     public bool $onlyLowStock = false;
 
     public bool $isModalOpen = false;
+
     public ?int $selectedInventoryId = null;
+
     public string $productName = '';
-    public int $quantity = 0;
+
+    public $quantity = 0;
+
     public string $adjustmentReason = '';
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedOnlyLowStock(): void
+    {
+        $this->resetPage();
+    }
 
     public function editQuantity(int $inventoryId)
     {
@@ -38,7 +52,7 @@ class Index extends Component
     public function updateQuantity()
     {
         $this->validate([
-            'quantity' => 'required|integer|min:0',
+            'quantity' => 'required|integer|min:0|max:2147483647',
             'adjustmentReason' => 'required|string|min:3|max:255',
         ]);
 
@@ -79,10 +93,10 @@ class Index extends Component
             });
         }
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $query->whereHas('product', function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('barcode', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('barcode', 'like', '%'.$this->search.'%');
             });
         }
 

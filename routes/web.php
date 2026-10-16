@@ -53,9 +53,9 @@ Route::middleware(['auth', 'account.active'])->group(function () {
     Route::get('/customers', CustomerIndex::class)->name('customers.index');
     Route::get('/orders', OrderIndex::class)->name('orders.index');
     Route::get('/settings', SettingsIndex::class)->name('settings.index');
-    Route::get('/ai-assistant', AiAssistant::class)->name('ai.assistant');
 
     Route::middleware('role:owner,manager')->group(function () {
+        Route::get('/ai-assistant', AiAssistant::class)->name('ai.assistant');
         Route::get('/reports/business', BusinessReport::class)->name('reports.business');
         Route::get('/reports/business/export/{type}', ReportExportController::class)
             ->whereIn('type', ['revenue', 'products', 'inventory'])

@@ -17,6 +17,7 @@ class AiAssistantTest extends TestCase
 
     public function test_ai_assistant_can_analyze_business_data_for_store(): void
     {
+        config(['services.gemini.key' => null, 'services.openai.key' => null]);
         $store = Store::create([
             'name' => 'Cửa Hàng Thử Nghiệm',
             'code' => 'test-store',

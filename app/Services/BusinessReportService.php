@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -60,5 +62,34 @@ class BusinessReportService
                 SUM(CASE WHEN orders.subtotal_amount > 0
                     THEN 1.0 * order_items.subtotal * orders.total_amount / orders.subtotal_amount ELSE 0 END) as revenue')
             ->orderByDesc('quantity_sold')->orderBy('order_items.product_id')->limit(10)->get();
+    }
+
+    public function slowStock(int $storeId, int $days, int $limit = 20): Collection
+    {
+        $lastSoldDates = OrderItem::query()
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('orders.store_id', $storeId)->where('orders.status', 'completed')
+            ->where('orders.order_date', '<=', now())
+            ->groupBy('order_items.product_id')
+            ->selectRaw('order_items.product_id, MAX(orders.order_date) as last_sold_at')
+            ->pluck('last_sold_at', 'product_id');
+        $cutoff = now()->subDays($days);
+
+        return Product::where('store_id', $storeId)->where('status', 1)
+            ->whereHas('inventory', fn ($query) => $query->where('quantity', '>', 0))
+            ->with(['inventory', 'category', 'supplier'])->get()
+            ->map(function (Product $product) use ($lastSoldDates) {
+                $lastSold = $lastSoldDates->get($product->id);
+                $product->last_sold_at = $lastSold ? Carbon::parse($lastSold) : null;
+
+                return $product;
+            })
+            ->filter(function (Product $product) use ($cutoff) {
+                $since = $product->last_sold_at ?? $product->inventory->last_imported_at ?? $product->created_at;
+
+                return $since->lte($cutoff);
+            })
+            ->sortBy(fn (Product $product) => ($product->last_sold_at ?? $product->inventory->last_imported_at ?? $product->created_at)->timestamp)
+            ->take($limit)->values();
     }
 }

@@ -2,15 +2,19 @@
 
 namespace App\Livewire\Customers;
 
-use Livewire\Component;
 use App\Models\Customer;
+use Livewire\Component;
 
 class Index extends Component
 {
     public string $name = '';
+
     public string $phone = '';
+
     public string $address = '';
+
     public ?int $customerId = null;
+
     public bool $isModalOpen = false;
 
     public function openModal()
@@ -31,6 +35,7 @@ class Index extends Component
         $this->name = '';
         $this->phone = '';
         $this->address = '';
+        $this->resetValidation();
     }
 
     public function edit(int $id)
@@ -45,7 +50,12 @@ class Index extends Component
 
     public function save()
     {
-        $this->validate(['name' => 'required|string|max:255']);
+        $this->name = trim($this->name);
+        $this->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+        ]);
         $storeId = auth()->user()->store_id;
 
         if ($this->customerId) {
@@ -74,6 +84,7 @@ class Index extends Component
         $customer = Customer::where('store_id', auth()->user()->store_id)->findOrFail($id);
         if ($customer->orders()->exists()) {
             session()->flash('error', 'Không thể xóa khách hàng đã có lịch sử mua hàng.');
+
             return;
         }
         $customer->delete();

@@ -48,6 +48,7 @@
                 </div>
                 <div class="modal-body">
                     <form wire:submit.prevent="save">
+                        @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Họ tên Khách hàng <span class="text-danger">*</span></label>
                             <input type="text" wire:model="name" class="form-control" placeholder="Vd: Nguyễn Văn A">

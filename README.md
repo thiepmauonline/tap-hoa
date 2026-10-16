@@ -23,6 +23,7 @@
 | POS, khách hàng, hóa đơn bán | Có | Có | Có |
 | Sản phẩm, kho, nhập hàng, nhà cung cấp | Có | Có | Không |
 | Báo cáo kinh doanh | Có | Có | Không |
+| Trợ lý AI và lịch sử phân tích | Có | Có | Không |
 | Quản lý nhân viên | Có | Không | Không |
 | Hủy hóa đơn, xuất báo cáo CSV | Có | Có | Không |
 | Sửa thông tin cửa hàng | Có | Không | Không |
@@ -90,6 +91,8 @@ Mọi endpoint tự lọc dữ liệu theo cửa hàng của token. Endpoint bá
 - Dòng tồn kho được khóa khi cập nhật để tránh bán âm khi nhiều thu ngân thao tác đồng thời.
 - Giá và sản phẩm được nạp lại từ server lúc thanh toán; không tin dữ liệu Livewire từ trình duyệt.
 - Mọi thay đổi kho mới được ghi vào `inventory_movements`, gồm số trước/sau, người thực hiện, loại và chứng từ nguồn.
+- Cập nhật kho và ghi biến động luôn nằm trong cùng transaction, kể cả khi gọi trực tiếp `InventoryService`.
+- Mỗi lần mở quầy bán hàng hoặc tạo phiếu nhập có mã chứng từ riêng được khóa ở server. Gửi lại cùng yêu cầu chỉ trả về chứng từ đã tạo, không cộng/trừ kho hay điểm lần nữa.
 - Phiếu đã nhập kho không sửa trực tiếp để tránh sai lịch sử; khi mở rộng nên dùng nghiệp vụ hủy/điều chỉnh đảo kho.
 
 ## Kiểm thử
@@ -99,6 +102,10 @@ php artisan test
 ```
 
 Feature test dùng SQLite in-memory. Bật extension `pdo_sqlite` trên môi trường chạy test. Production vẫn dùng MySQL.
+
+Các ca kiểm thử gồm rollback khi giao dịch lỗi, gửi lại yêu cầu bán/nhập hàng, nhập liệu trống, phân quyền trên phiên đang mở, số liệu báo cáo/AI, lỗi API giả lập và tính nhất quán của dữ liệu mẫu. Test AI không cần API key và không gọi dịch vụ bên ngoài.
+
+Trợ lý AI chỉ dành cho chủ cửa hàng/quản lý. Lịch sử hiển thị 50 lượt mới nhất; HTML và liên kết không an toàn trong câu trả lời được lọc trước khi hiển thị. API lỗi sẽ chuyển sang phân tích cục bộ, không tự thử nhiều model liên tiếp. Giới hạn gửi câu hỏi là 10 lượt/phút/tài khoản.
 
 ## Triển khai production
 

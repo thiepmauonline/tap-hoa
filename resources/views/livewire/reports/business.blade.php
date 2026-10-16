@@ -3,7 +3,7 @@
         <div class="row g-3 align-items-end">
             <div class="col-md-3"><label class="form-label fw-semibold">Từ ngày</label><input type="date" wire:model.live="dateFrom" class="form-control">@error('dateFrom')<div class="text-danger small">{{ $message }}</div>@enderror</div>
             <div class="col-md-3"><label class="form-label fw-semibold">Đến ngày</label><input type="date" wire:model.live="dateTo" class="form-control">@error('dateTo')<div class="text-danger small">{{ $message }}</div>@enderror</div>
-            <div class="col-md-3"><label class="form-label fw-semibold">Ngưỡng tồn lâu</label><div class="input-group"><input type="number" min="7" wire:model.live.debounce.500ms="slowStockDays" class="form-control"><span class="input-group-text">ngày</span></div></div>
+            <div class="col-md-3"><label class="form-label fw-semibold">Ngưỡng tồn lâu</label><div class="input-group"><input type="number" min="7" max="3650" wire:model.live.debounce.500ms="slowStockDays" class="form-control"><span class="input-group-text">ngày</span></div>@error('slowStockDays')<div class="text-danger small">{{ $message }}</div>@enderror</div>
             <div class="col-md-3">
                 <a href="{{ route('ai.assistant') }}" class="btn btn-outline-primary fw-medium w-100 py-2 d-flex align-items-center justify-content-center gap-1.5">
                     <i class="bi bi-chat-text"></i>
@@ -13,14 +13,19 @@
         </div>
         <div class="border-top mt-3 pt-3">
             <div class="d-flex flex-wrap gap-2">
+                @if(!$errors->any())
                 <a href="{{ route('reports.business.export', ['type' => 'revenue', 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-download me-1"></i> CSV doanh thu</a>
                 <a href="{{ route('reports.business.export', ['type' => 'products', 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-download me-1"></i> CSV top 10 bán chạy</a>
+                @endif
                 <a href="{{ route('reports.business.export', ['type' => 'inventory']) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-download me-1"></i> CSV tồn kho hiện tại</a>
             </div>
             <p class="small text-muted mt-2 mb-0">Doanh thu và lợi nhuận đã trừ giảm giá/đổi điểm, chỉ tính hóa đơn hoàn tất trong khoảng ngày đã chọn. Tồn kho xuất theo số lượng hiện tại.</p>
         </div>
     </div>
 
+    @if($errors->any())
+        <div class="alert alert-warning" role="alert">Vui lòng sửa bộ lọc để xem và xuất báo cáo.</div>
+    @else
     <div class="row g-3 mb-4">
         <div class="col-md-3"><div class="card card-custom p-3 h-100"><small class="text-muted">Doanh thu</small><div class="fs-4 fw-bold text-primary">{{ number_format($summary->revenue, 0, ',', '.') }} đ</div></div></div>
         <div class="col-md-3"><div class="card card-custom p-3 h-100"><small class="text-muted">Lợi nhuận gộp</small><div class="fs-4 fw-bold text-success">{{ number_format($summary->gross_profit, 0, ',', '.') }} đ</div></div></div>
@@ -40,4 +45,5 @@
     <div class="card card-custom mt-4"><div class="card-header bg-white"><strong>Hàng tồn lâu</strong><small class="text-muted ms-2">Còn hàng nhưng chưa bán trong ít nhất {{ $slowStockDays }} ngày</small></div><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th class="ps-3">Sản phẩm</th><th>Danh mục</th><th class="text-end">Tồn kho</th><th class="text-end pe-3">Lần bán gần nhất</th></tr></thead><tbody>
         @forelse($slowStockProducts as $product)<tr><td class="ps-3 fw-semibold">{{ $product->name }}</td><td>{{ $product->category->name ?? '—' }}</td><td class="text-end">{{ number_format($product->inventory->quantity) }} {{ $product->unit }}</td><td class="text-end pe-3">{{ $product->last_sold_at?->format('d/m/Y') ?? 'Chưa từng bán' }}</td></tr>@empty<tr><td colspan="4" class="text-center text-muted py-4">Không có sản phẩm tồn lâu theo ngưỡng đã chọn.</td></tr>@endforelse
     </tbody></table></div></div>
+    @endif
 </div>

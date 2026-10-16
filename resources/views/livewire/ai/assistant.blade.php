@@ -37,7 +37,7 @@
                         <div class="d-flex justify-content-start mb-3">
                             <div class="bg-white border text-dark px-3 py-2.5 rounded-3 shadow-none" style="max-width: 88%; font-size: 0.85rem;">
                                 <div class="ai-rendered-content" style="line-height: 1.55;">
-                                    {!! \Illuminate\Support\Str::markdown($log->answer) !!}
+                                    {!! \Illuminate\Support\Str::markdown($log->answer, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
                                 </div>
                                 <div class="text-muted fs-8 mt-1.5 pt-1 border-top d-flex justify-content-between align-items-center">
                                     <span class="text-secondary">Trợ lý</span>

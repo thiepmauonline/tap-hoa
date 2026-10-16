@@ -2,17 +2,23 @@
 
 namespace App\Livewire\Suppliers;
 
-use Livewire\Component;
 use App\Models\Supplier;
+use Livewire\Component;
 
 class Index extends Component
 {
     public string $name = '';
+
     public string $phone = '';
+
     public string $email = '';
+
     public string $address = '';
+
     public string $note = '';
+
     public ?int $supplierId = null;
+
     public bool $isModalOpen = false;
 
     public function openModal()
@@ -35,6 +41,7 @@ class Index extends Component
         $this->email = '';
         $this->address = '';
         $this->note = '';
+        $this->resetValidation();
     }
 
     public function edit(int $id)
@@ -51,7 +58,14 @@ class Index extends Component
 
     public function save()
     {
-        $this->validate(['name' => 'required|string|max:255']);
+        $this->name = trim($this->name);
+        $this->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string|max:255',
+            'note' => 'nullable|string|max:2000',
+        ]);
         $storeId = auth()->user()->store_id;
 
         if ($this->supplierId) {
@@ -83,6 +97,7 @@ class Index extends Component
         $supplier = Supplier::where('store_id', auth()->user()->store_id)->findOrFail($id);
         if ($supplier->products()->exists() || $supplier->purchaseOrders()->exists()) {
             session()->flash('error', 'Không thể xóa nhà cung cấp đã có sản phẩm hoặc phiếu nhập.');
+
             return;
         }
         $supplier->delete();
