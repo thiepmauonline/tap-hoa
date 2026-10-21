@@ -15,21 +15,39 @@
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .pos-header {
-            height: 56px;
+            min-height: 56px;
+            flex-shrink: 0;
             background: #0f172a;
             color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 1.25rem;
+            padding: 0.5rem 1.25rem;
+            gap: 0.75rem;
         }
 
         .pos-body {
-            height: calc(100vh - 56px);
+            flex: 1;
+            min-height: 0;
+        }
+
+        .pos-workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 7fr) minmax(420px, 5fr);
+        }
+
+        .pos-workspace > .pos-left, .pos-workspace > .pos-right {
+            width: auto;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .pos-left {
@@ -56,6 +74,64 @@
             background: #ffffff;
         }
 
+        .pos-search, .pos-cart-heading { flex-shrink: 0; }
+        .pos-products { min-height: 0; }
+        .pos-cart { flex: 1 1 0; min-height: 140px; overscroll-behavior: contain; }
+        .pos-payment {
+            flex: 0 1 auto;
+            min-height: 0;
+            max-height: 60%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .pos-payment-details {
+            min-height: 0;
+            padding: 0 0.25rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+
+        .pos-checkout { flex-shrink: 0; margin-top: 0.75rem; }
+
+        .pos-cart table { min-width: 360px; }
+        .pos-cart th, .pos-cart td { white-space: nowrap; }
+        .pos-cart .pos-quantity { width: 76px; min-width: 64px; }
+        .pos-item-name { max-width: 140px; }
+        .pos-header > div { min-width: 0; }
+        .pos-store-name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+        .fs-7 { font-size: 0.825rem !important; }
+        .fs-8 { font-size: 0.75rem !important; }
+
+        @media screen and (max-width: 1399.98px), screen and (max-height: 800px) {
+            html { font-size: 14px; }
+            .pos-header { padding: 0.5rem 1rem; }
+            .pos-header > div { gap: 0.75rem !important; }
+            .pos-left, .pos-right { padding: 0.75rem !important; }
+            .pos-payment { padding: 0.75rem !important; }
+            .pos-left .form-control-lg, .pos-payment .form-control-lg { font-size: 1rem; padding: 0.4rem 0.6rem; }
+            .product-card { padding: 0.6rem; }
+        }
+
+        @media screen and (max-width: 1199.98px) {
+            .pos-workspace { grid-template-columns: minmax(0, 1fr) minmax(390px, 1fr); }
+            .pos-store-name, .pos-unit-price { display: none; }
+            .pos-header .pos-title { font-size: 1rem !important; }
+        }
+
+        @media screen and (max-width: 767.98px) {
+            body { height: auto; min-height: 100dvh; overflow: auto; }
+            .pos-header { flex-wrap: wrap; }
+            .pos-workspace { grid-template-columns: minmax(0, 1fr); height: auto !important; }
+            .pos-left { height: 45dvh; min-height: 260px !important; }
+            .pos-right { height: auto; overflow: visible !important; }
+            .pos-cart { flex: none; height: 240px; }
+            .pos-payment { max-height: none; overflow: visible; }
+            .pos-payment-details { overflow: visible; }
+        }
+
         .product-card:hover {
             border-color: #6366f1;
             transform: translateY(-2px);
@@ -73,6 +149,7 @@
             }
 
             html, body {
+                display: block;
                 width: 80mm;
                 height: auto !important;
                 margin: 0 !important;
@@ -124,10 +201,10 @@
             <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-sm text-decoration-none">
                 <i class="bi bi-arrow-left"></i> Về Quản trị
             </a>
-            <span class="fw-bold fs-5 text-warning">
+            <span class="pos-title fw-bold fs-5 text-warning">
                 <i class="bi bi-calculator-fill me-1"></i> BÁN HÀNG TẠI QUẦY (POS)
             </span>
-            <span class="badge bg-secondary ms-2">{{ auth()->user()->store->name ?? 'Cửa hàng' }}</span>
+            <span class="pos-store-name badge bg-secondary ms-2">{{ auth()->user()->store->name ?? 'Cửa hàng' }}</span>
         </div>
 
         <div class="d-flex align-items-center gap-3">

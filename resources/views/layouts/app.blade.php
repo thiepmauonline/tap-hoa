@@ -120,6 +120,7 @@
         .main-container {
             padding: 1.75rem;
             flex: 1;
+            min-width: 0;
         }
 
         /* Card Custom Styling */
@@ -140,6 +141,57 @@
         /* Utility font sizes */
         .fs-7 { font-size: 0.825rem !important; }
         .fs-8 { font-size: 0.75rem !important; }
+
+        .main-container .row > *, .main-container .card { min-width: 0; }
+        .table-responsive, .main-container .card-body.p-0 {
+            max-width: 100%;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+        }
+        .main-container .table th, .main-container .table td { white-space: nowrap; }
+
+        .navbar-custom .container-fluid { gap: 0.75rem; }
+        .navbar-custom .navbar-text { min-width: 0; }
+        .navbar-custom .navbar-nav { flex-shrink: 0; }
+        .store-badge .badge { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+
+        #chatContainer { min-height: 0; overflow-wrap: anywhere; }
+        .ai-rendered-content pre, .ai-rendered-content table {
+            display: block;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .dashboard-chart { position: relative; height: 320px; width: 100%; }
+
+        @media screen {
+            .modal-content { max-height: calc(100dvh - 2 * var(--bs-modal-margin)); }
+            .modal-header, .modal-footer { flex-shrink: 0; }
+            .modal-body { min-height: 0; overflow-y: auto; }
+        }
+
+        /* Compact spacing for laptop screens, including Windows display scaling. */
+        @media screen and (max-width: 1399.98px), screen and (max-height: 800px) {
+            html { font-size: 14px; }
+            :root { --sidebar-width: 220px; }
+            .main-container { padding: 1rem; }
+            .navbar-custom { padding: 0.5rem 1rem; }
+            .navbar-custom .navbar-nav { gap: 0.75rem !important; }
+            #sidebar .brand { padding: 0.85rem 1rem; }
+            #sidebar .nav-link { padding: 0.5rem 0.75rem; }
+            #sidebar .nav-heading { padding: 0.65rem 1rem 0.3rem; }
+            .dashboard-chart { height: clamp(180px, 32dvh, 260px); }
+            .main-container .table { font-size: 0.875rem; }
+        }
+
+        @media screen and (max-width: 1199.98px) {
+            .store-badge { display: none; }
+        }
+
+        @media screen and (max-width: 991.98px) {
+            :root { --sidebar-width: 190px; }
+            .navbar-custom .navbar-text { font-size: 1rem !important; }
+        }
     </style>
 
     @livewireStyles
@@ -228,7 +280,7 @@
 
                 <ul class="navbar-nav ms-auto align-items-center gap-3">
                     <!-- Store Info Badge -->
-                    <li class="nav-item">
+                    <li class="nav-item store-badge">
                         <span class="badge badge-soft-primary px-3 py-2 rounded-pill fs-7">
                             <i class="bi bi-building me-1"></i> {{ auth()->user()->store->name ?? 'Cửa hàng' }}
                         </span>

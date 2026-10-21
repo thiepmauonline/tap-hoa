@@ -78,7 +78,7 @@
 
     <!-- KHU VỰC BIỂU ĐỒ DOANH THU CHART.JS (7 NGÀY GẦN NHẤT) -->
     <div class="card card-custom p-4 mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
             <div>
                 <h6 class="fw-bold text-dark mb-1">Doanh thu 7 ngày gần nhất</h6>
                 <small class="text-muted">Biểu đồ tổng hợp giá trị các đơn bán hoàn tất</small>
@@ -87,7 +87,7 @@
                 {{ $chartLabels[0] ?? '' }} — {{ end($chartLabels) }}
             </span>
         </div>
-        <div style="position: relative; height: 320px; width: 100%;">
+        <div class="dashboard-chart">
             <canvas id="revenueChart"></canvas>
         </div>
     </div>
@@ -95,7 +95,7 @@
     <!-- Hàng 2: Đơn bán mới nhất & Cảnh báo kho -->
     <div class="row g-4 mb-4">
         <!-- Đơn bán mới nhất -->
-        <div class="col-lg-7">
+        <div class="col-xxl-7">
             <div class="card card-custom h-100">
                 <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3 px-3">
                     <h6 class="fw-bold text-dark mb-0">Đơn hàng gần đây</h6>
@@ -137,7 +137,7 @@
         </div>
 
         <!-- Sản phẩm sắp hết kho cần nhập thêm -->
-        <div class="col-lg-5">
+        <div class="col-xxl-5">
             <div class="card card-custom h-100">
                 <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3 px-3">
                     <h6 class="fw-bold text-dark mb-0">Hàng sắp hết kho</h6>

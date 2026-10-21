@@ -1,8 +1,8 @@
-<div class="row g-0 h-100">
+<div class="pos-workspace row g-0 h-100">
     <!-- Cột Trái: Danh sách Sản phẩm & Quét mã vạch (7 Cột) -->
     <div class="col-lg-7 pos-left p-3">
         <!-- Ô quét mã vạch & tìm kiếm -->
-        <div class="row g-2 mb-3">
+        <div class="pos-search row g-2 mb-3">
             <div class="col-md-6">
                 <form wire:submit.prevent="scanBarcode">
                     <div class="input-group">
@@ -27,11 +27,11 @@
         @endif
 
         <!-- Grid Danh sách Sản phẩm chọn nhanh -->
-        <div class="flex-grow-1 overflow-auto pe-1">
+        <div class="pos-products flex-grow-1 overflow-auto pe-1">
             <div class="row g-2">
                 @forelse($products as $p)
                     @php $qty = $p->inventory->quantity ?? 0; @endphp
-                    <div class="col-xl-3 col-md-4 col-6">
+                    <div class="col-xxl-3 col-md-4 col-6">
                         <div wire:click="addToCart({{ $p->id }})" class="product-card h-100 d-flex flex-column justify-content-between">
                             <div>
                                 <div class="d-flex align-items-center gap-2 mb-1">
@@ -68,7 +68,7 @@
 
     <!-- Cột Phải: Giỏ hàng & Thanh toán (5 Cột) -->
     <div class="col-lg-5 pos-right p-3 border-start">
-        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+        <div class="pos-cart-heading d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
             <h6 class="fw-bold text-dark mb-0"><i class="bi bi-cart3 me-1"></i> Giỏ hàng ({{ count($cart) }} món)</h6>
             <button wire:click="clearCart" class="btn btn-sm btn-outline-danger" {{ empty($cart) ? 'disabled' : '' }}>
                 <i class="bi bi-trash me-1"></i> Xóa giỏ
@@ -76,13 +76,13 @@
         </div>
 
         <!-- Bảng Giỏ hàng -->
-        <div class="flex-grow-1 overflow-auto mb-3 bg-white rounded border">
+        <div class="pos-cart overflow-auto mb-3 bg-white rounded border">
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light sticky-top fs-7">
                     <tr>
                         <th class="ps-2">Sản phẩm</th>
-                        <th style="width: 100px;">SL</th>
-                        <th>Đơn giá</th>
+                        <th class="pos-quantity">SL</th>
+                        <th class="pos-unit-price">Đơn giá</th>
                         <th class="text-end pe-2">Thành tiền</th>
                         <th></th>
                     </tr>
@@ -91,7 +91,7 @@
                     @forelse($cart as $id => $item)
                         <tr>
                             <td class="ps-2">
-                                <div class="fw-semibold text-dark fs-7 text-truncate" style="max-width: 140px;">{{ $item['name'] }}</div>
+                                <div class="pos-item-name fw-semibold text-dark fs-7 text-truncate" title="{{ $item['name'] }}">{{ $item['name'] }}</div>
                                 <small class="text-muted fs-8">{{ number_format($item['price'], 0, ',', '.') }}đ / {{ $item['unit'] }}</small>
                             </td>
                             <td>
@@ -99,7 +99,7 @@
                                        wire:change="updateQuantity({{ $id }}, $event.target.value)" 
                                        class="form-control form-control-sm text-center fw-bold px-1">
                             </td>
-                            <td class="fs-7">{{ number_format($item['price'], 0, ',', '.') }}</td>
+                            <td class="pos-unit-price fs-7">{{ number_format($item['price'], 0, ',', '.') }}</td>
                             <td class="text-end fw-bold text-primary fs-7">{{ number_format($item['subtotal'], 0, ',', '.') }}</td>
                             <td class="text-center">
                                 <button wire:click="removeFromCart({{ $id }})" class="btn btn-sm text-danger p-0 border-0"><i class="bi bi-x-circle"></i></button>
@@ -118,96 +118,99 @@
         </div>
 
         <!-- Tổng tiền & Khách hàng thanh toán -->
-        <div class="bg-white p-3 rounded border shadow-sm">
-            <!-- Chọn Khách hàng -->
-            <div class="mb-2">
-                <label class="form-label fs-8 text-muted mb-1">Khách hàng tích điểm</label>
-                <select wire:model.live="selectedCustomerId" class="form-select form-select-sm">
-                    <option value="">-- Khách lẻ (Không tích điểm) --</option>
-                    @foreach($customers as $cust)
-                        <option value="{{ $cust->id }}">{{ $cust->name }} - SĐT: {{ $cust->phone }} ({{ $cust->point }} điểm)</option>
-                    @endforeach
-                </select>
-            </div>
+        <div class="pos-payment bg-white p-3 rounded border shadow-sm">
+            <div class="pos-payment-details">
+                <!-- Chọn Khách hàng -->
+                <div class="mb-2">
+                    <label class="form-label fs-8 text-muted mb-1">Khách hàng tích điểm</label>
+                    <select wire:model.live="selectedCustomerId" class="form-select form-select-sm">
+                        <option value="">-- Khách lẻ (Không tích điểm) --</option>
+                        @foreach($customers as $cust)
+                            <option value="{{ $cust->id }}">{{ $cust->name }} - SĐT: {{ $cust->phone }} ({{ $cust->point }} điểm)</option>
+                        @endforeach
+                    </select>
+                </div>
 
-            @if($selectedCustomer)
-                <div class="border rounded p-2 mb-2 bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-semibold small">Điểm hiện có: <span class="text-primary">{{ number_format($selectedCustomer->point) }} điểm</span></div>
-                            <small class="text-muted">1 điểm = {{ number_format($pointValue, 0, ',', '.') }}đ giảm giá</small>
+                @if($selectedCustomer)
+                    <div class="border rounded p-2 mb-2 bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold small">Điểm hiện có: <span class="text-primary">{{ number_format($selectedCustomer->point) }} điểm</span></div>
+                                <small class="text-muted">1 điểm = {{ number_format($pointValue, 0, ',', '.') }}đ giảm giá</small>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input wire:model.live="usePoints" class="form-check-input" type="checkbox" id="use_customer_points">
+                                <label class="form-check-label fw-semibold small" for="use_customer_points">Dùng điểm</label>
+                            </div>
                         </div>
-                        <div class="form-check form-switch mb-0">
-                            <input wire:model.live="usePoints" class="form-check-input" type="checkbox" id="use_customer_points">
-                            <label class="form-check-label fw-semibold small" for="use_customer_points">Dùng điểm</label>
-                        </div>
-                    </div>
 
-                    @if($usePoints)
-                        <div class="input-group input-group-sm mt-2">
-                            <input type="number" min="1" max="{{ $maxRedeemablePoints }}" wire:model.live.debounce.300ms="pointsToRedeem" class="form-control" placeholder="Số điểm muốn dùng">
-                            <span class="input-group-text">/ {{ number_format($maxRedeemablePoints) }} điểm tối đa</span>
-                        </div>
-                        @error('pointsToRedeem') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                        @if($pointsDiscountAmount > 0)
-                            <div class="d-flex justify-content-between small mt-1 text-success"><span>Giảm bằng điểm:</span><strong>-{{ number_format($pointsDiscountAmount, 0, ',', '.') }} đ</strong></div>
+                        @if($usePoints)
+                            <div class="input-group input-group-sm mt-2">
+                                <input type="number" min="1" max="{{ $maxRedeemablePoints }}" wire:model.live.debounce.300ms="pointsToRedeem" class="form-control" placeholder="Số điểm muốn dùng">
+                                <span class="input-group-text">/ {{ number_format($maxRedeemablePoints) }} điểm tối đa</span>
+                            </div>
+                            @error('pointsToRedeem') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            @if($pointsDiscountAmount > 0)
+                                <div class="d-flex justify-content-between small mt-1 text-success"><span>Giảm bằng điểm:</span><strong>-{{ number_format($pointsDiscountAmount, 0, ',', '.') }} đ</strong></div>
+                            @endif
                         @endif
-                    @endif
+                    </div>
+                @endif
+
+                <!-- Tóm tắt số tiền -->
+                <div class="d-flex justify-content-between fs-7 mb-1 text-muted">
+                    <span>Tạm tính:</span>
+                    <span class="fw-semibold text-dark">{{ number_format($subtotal, 0, ',', '.') }} đ</span>
                 </div>
-            @endif
-
-            <!-- Tóm tắt số tiền -->
-            <div class="d-flex justify-content-between fs-7 mb-1 text-muted">
-                <span>Tạm tính:</span>
-                <span class="fw-semibold text-dark">{{ number_format($subtotal, 0, ',', '.') }} đ</span>
-            </div>
-            <div class="d-flex justify-content-between align-items-center fs-7 mb-2 text-muted">
-                <span>Giảm giá:</span>
-                <input type="number" wire:model.live="discount" class="form-control form-control-sm text-end fw-bold text-danger ms-2" style="width: 110px;" placeholder="0">
-            </div>
-            @error('discount') <div class="text-danger small text-end mb-2">{{ $message }}</div> @enderror
-
-            @if($pointsDiscountAmount > 0)
-                <div class="d-flex justify-content-between fs-7 mb-2 text-success">
-                    <span>Giảm bằng {{ number_format($pointsToRedeem) }} điểm:</span>
-                    <strong>-{{ number_format($pointsDiscountAmount, 0, ',', '.') }} đ</strong>
+                <div class="d-flex justify-content-between align-items-center fs-7 mb-2 text-muted">
+                    <span>Giảm giá:</span>
+                    <input type="number" wire:model.live="discount" class="form-control form-control-sm text-end fw-bold text-danger ms-2" style="width: 110px;" placeholder="0">
                 </div>
-            @endif
+                @error('discount') <div class="text-danger small text-end mb-2">{{ $message }}</div> @enderror
 
-            <div class="d-flex justify-content-between align-items-center py-2 border-top border-bottom my-2">
-                <span class="fw-bold fs-6 text-dark">TỔNG KHÁCH TRẢ:</span>
-                <span class="fw-bold fs-4 text-danger">{{ number_format($totalAmount, 0, ',', '.') }} đ</span>
+                @if($pointsDiscountAmount > 0)
+                    <div class="d-flex justify-content-between fs-7 mb-2 text-success">
+                        <span>Giảm bằng {{ number_format($pointsToRedeem) }} điểm:</span>
+                        <strong>-{{ number_format($pointsDiscountAmount, 0, ',', '.') }} đ</strong>
+                    </div>
+                @endif
+
+                <div class="d-flex justify-content-between align-items-center py-2 border-top border-bottom my-2">
+                    <span class="fw-bold fs-6 text-dark">TỔNG KHÁCH TRẢ:</span>
+                    <span class="fw-bold fs-4 text-danger">{{ number_format($totalAmount, 0, ',', '.') }} đ</span>
+                </div>
+
+                <!-- Tiền khách đưa & Tiền thừa -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fs-8 text-muted mb-1">Tiền khách đưa</label>
+                        <input type="number" wire:model.live="paidAmount" class="form-control form-control-lg fw-bold text-success" placeholder="0">
+                        @error('paidAmount') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fs-8 text-muted mb-1">Tiền thừa trả lại</label>
+                        <div class="form-control form-control-lg bg-light fw-bold text-primary">{{ number_format($changeAmount, 0, ',', '.') }} đ</div>
+                    </div>
+                </div>
+
+                <!-- Phương thức thanh toán -->
+                <div class="btn-group w-100 mb-3" role="group">
+                    <input type="radio" class="btn-check" name="pm" id="pm_cash" value="cash" wire:model="paymentMethod">
+                    <label class="btn btn-outline-primary btn-sm" for="pm_cash"><i class="bi bi-cash-stack"></i> Tiền mặt</label>
+
+                    <input type="radio" class="btn-check" name="pm" id="pm_transfer" value="transfer" wire:model="paymentMethod">
+                    <label class="btn btn-outline-primary btn-sm" for="pm_transfer"><i class="bi bi-bank"></i> Chuyển khoản</label>
+                </div>
+
+                @if($errors->any())
+                    <div class="alert alert-danger py-2 px-3 mb-2 small">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $errors->first() }}
+                    </div>
+                @endif
+
             </div>
 
-            <!-- Tiền khách đưa & Tiền thừa -->
-            <div class="row g-2 mb-3">
-                <div class="col-6">
-                    <label class="form-label fs-8 text-muted mb-1">Tiền khách đưa</label>
-                    <input type="number" wire:model.live="paidAmount" class="form-control form-control-lg fw-bold text-success" placeholder="0">
-                    @error('paidAmount') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-6">
-                    <label class="form-label fs-8 text-muted mb-1">Tiền thừa trả lại</label>
-                    <div class="form-control form-control-lg bg-light fw-bold text-primary">{{ number_format($changeAmount, 0, ',', '.') }} đ</div>
-                </div>
-            </div>
-
-            <!-- Phương thức thanh toán -->
-            <div class="btn-group w-100 mb-3" role="group">
-                <input type="radio" class="btn-check" name="pm" id="pm_cash" value="cash" wire:model="paymentMethod">
-                <label class="btn btn-outline-primary btn-sm" for="pm_cash"><i class="bi bi-cash-stack"></i> Tiền mặt</label>
-
-                <input type="radio" class="btn-check" name="pm" id="pm_transfer" value="transfer" wire:model="paymentMethod">
-                <label class="btn btn-outline-primary btn-sm" for="pm_transfer"><i class="bi bi-bank"></i> Chuyển khoản</label>
-            </div>
-
-            @if($errors->any())
-                <div class="alert alert-danger py-2 px-3 mb-2 small">
-                    <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $errors->first() }}
-                </div>
-            @endif
-
-            <button type="button" wire:click="checkout" wire:loading.attr="disabled" wire:target="checkout" class="btn btn-success btn-lg w-100 fw-bold py-2 shadow" {{ empty($cart) ? 'disabled' : '' }}>
+            <button type="button" wire:click="checkout" wire:loading.attr="disabled" wire:target="checkout" class="pos-checkout btn btn-success btn-lg w-100 fw-bold py-2 shadow" {{ empty($cart) ? 'disabled' : '' }}>
                 <span wire:loading.remove wire:target="checkout"><i class="bi bi-printer-fill me-1"></i> THANH TOÁN & IN HÓA ĐƠN</span>
                 <span wire:loading wire:target="checkout"><span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...</span>
             </button>
