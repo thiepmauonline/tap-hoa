@@ -22,7 +22,7 @@ class InventoryService
     ): Inventory {
         return DB::transaction(function () use ($storeId, $productId, $quantityChange, $type, $userId, $referenceType, $referenceId, $note) {
             if (! Product::where('store_id', $storeId)->whereKey($productId)->exists()) {
-                throw ValidationException::withMessages(['cart' => 'Sản phẩm không thuộc cửa hàng hiện tại.']);
+                throw ValidationException::withMessages(['cart' => 'Sản phẩm không thuộc cửa hàng.']);
             }
             Inventory::firstOrCreate(
                 ['store_id' => $storeId, 'product_id' => $productId],
@@ -35,11 +35,11 @@ class InventoryService
             $after = $before + $quantityChange;
 
             if ($after > 2147483647) {
-                throw ValidationException::withMessages(['cart' => 'Số lượng tồn kho vượt quá giới hạn cho phép.']);
+                throw ValidationException::withMessages(['cart' => 'Số lượng tồn kho vượt giới hạn.']);
             }
             if ($after < 0) {
                 throw ValidationException::withMessages([
-                    'cart' => 'Tồn kho đã thay đổi và không còn đủ để hoàn tất giao dịch.',
+                    'cart' => 'Tồn kho đã thay đổi, không đủ hàng để giao dịch.',
                 ]);
             }
 

@@ -7,14 +7,14 @@
                 <form wire:submit.prevent="scanBarcode">
                     <div class="input-group">
                         <span class="input-group-text bg-warning text-dark fw-bold"><i class="bi bi-barcode-scan"></i></span>
-                        <input type="text" wire:model="barcodeInput" class="form-control form-control-lg fw-bold" placeholder="Quét mã vạch tại đây + Enter..." autofocus>
+                        <input type="text" wire:model="barcodeInput" class="form-control form-control-lg fw-bold" placeholder="Quét mã vạch, nhấn Enter" autofocus>
                     </div>
                 </form>
             </div>
             <div class="col-md-6">
                 <div class="input-group">
                     <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-                    <input type="text" wire:model.live.debounce.250ms="search" class="form-control form-control-lg" placeholder="Tìm theo tên sản phẩm...">
+                    <input type="text" wire:model.live.debounce.250ms="search" class="form-control form-control-lg" placeholder="Tìm tên sản phẩm">
                 </div>
             </div>
         </div>
@@ -59,7 +59,7 @@
                 @empty
                     <div class="col-12 text-center text-muted py-5">
                         <i class="bi bi-box-seam fs-1 d-block mb-2"></i>
-                        Không tìm thấy sản phẩm nào!
+                        Không tìm thấy sản phẩm
                     </div>
                 @endforelse
             </div>
@@ -69,7 +69,7 @@
     <!-- Cột Phải: Giỏ hàng & Thanh toán (5 Cột) -->
     <div class="col-lg-5 pos-right p-3 border-start">
         <div class="pos-cart-heading d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-cart3 me-1"></i> Giỏ hàng ({{ count($cart) }} món)</h6>
+            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-cart3 me-1"></i> Giỏ hàng ({{ count($cart) }})</h6>
             <button wire:click="clearCart" class="btn btn-sm btn-outline-danger" {{ empty($cart) ? 'disabled' : '' }}>
                 <i class="bi bi-trash me-1"></i> Xóa giỏ
             </button>
@@ -109,7 +109,7 @@
                         <tr>
                             <td colspan="5" class="text-center text-muted py-5 fs-7">
                                 <i class="bi bi-cart-x fs-2 d-block mb-1 text-secondary"></i>
-                                Chưa có sản phẩm nào trong giỏ
+                                Giỏ hàng trống
                             </td>
                         </tr>
                     @endforelse
@@ -122,9 +122,9 @@
             <div class="pos-payment-details">
                 <!-- Chọn Khách hàng -->
                 <div class="mb-2">
-                    <label class="form-label fs-8 text-muted mb-1">Khách hàng tích điểm</label>
+                    <label class="form-label fs-8 text-muted mb-1">Khách hàng</label>
                     <select wire:model.live="selectedCustomerId" class="form-select form-select-sm">
-                        <option value="">-- Khách lẻ (Không tích điểm) --</option>
+                        <option value="">Khách lẻ · Không tích điểm</option>
                         @foreach($customers as $cust)
                             <option value="{{ $cust->id }}">{{ $cust->name }} - SĐT: {{ $cust->phone }} ({{ $cust->point }} điểm)</option>
                         @endforeach
@@ -146,12 +146,12 @@
 
                         @if($usePoints)
                             <div class="input-group input-group-sm mt-2">
-                                <input type="number" min="1" max="{{ $maxRedeemablePoints }}" wire:model.live.debounce.300ms="pointsToRedeem" class="form-control" placeholder="Số điểm muốn dùng">
+                                <input type="number" min="1" max="{{ $maxRedeemablePoints }}" wire:model.live.debounce.300ms="pointsToRedeem" class="form-control" placeholder="Số điểm">
                                 <span class="input-group-text">/ {{ number_format($maxRedeemablePoints) }} điểm tối đa</span>
                             </div>
                             @error('pointsToRedeem') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                             @if($pointsDiscountAmount > 0)
-                                <div class="d-flex justify-content-between small mt-1 text-success"><span>Giảm bằng điểm:</span><strong>-{{ number_format($pointsDiscountAmount, 0, ',', '.') }} đ</strong></div>
+                                <div class="d-flex justify-content-between small mt-1 text-success"><span>Đổi điểm:</span><strong>-{{ number_format($pointsDiscountAmount, 0, ',', '.') }} đ</strong></div>
                             @endif
                         @endif
                     </div>
@@ -176,19 +176,19 @@
                 @endif
 
                 <div class="d-flex justify-content-between align-items-center py-2 border-top border-bottom my-2">
-                    <span class="fw-bold fs-6 text-dark">TỔNG KHÁCH TRẢ:</span>
+                    <span class="fw-bold fs-6 text-dark">Tổng thanh toán:</span>
                     <span class="fw-bold fs-4 text-danger">{{ number_format($totalAmount, 0, ',', '.') }} đ</span>
                 </div>
 
-                <!-- Tiền khách đưa & Tiền thừa -->
+                <!-- Khách đưa & Tiền thừa -->
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <label class="form-label fs-8 text-muted mb-1">Tiền khách đưa</label>
+                        <label class="form-label fs-8 text-muted mb-1">Khách đưa</label>
                         <input type="number" wire:model.live="paidAmount" class="form-control form-control-lg fw-bold text-success" placeholder="0">
                         @error('paidAmount') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-6">
-                        <label class="form-label fs-8 text-muted mb-1">Tiền thừa trả lại</label>
+                        <label class="form-label fs-8 text-muted mb-1">Tiền thừa</label>
                         <div class="form-control form-control-lg bg-light fw-bold text-primary">{{ number_format($changeAmount, 0, ',', '.') }} đ</div>
                     </div>
                 </div>
@@ -211,7 +211,7 @@
             </div>
 
             <button type="button" wire:click="checkout" wire:loading.attr="disabled" wire:target="checkout" class="pos-checkout btn btn-success btn-lg w-100 fw-bold py-2 shadow" {{ empty($cart) ? 'disabled' : '' }}>
-                <span wire:loading.remove wire:target="checkout"><i class="bi bi-printer-fill me-1"></i> THANH TOÁN & IN HÓA ĐƠN</span>
+                <span wire:loading.remove wire:target="checkout"><i class="bi bi-printer-fill me-1"></i> Thanh toán và in</span>
                 <span wire:loading wire:target="checkout"><span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...</span>
             </button>
         </div>
@@ -223,7 +223,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Thanh toán thành công!</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Thanh toán thành công</h5>
                     <button wire:click="closeSuccessModal" type="button" class="btn-close btn-close-white"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
@@ -236,11 +236,11 @@
                             <strong class="text-dark">{{ $lastCompletedOrder->customer->name ?? 'Khách lẻ' }}</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
-                            <span>Tiền khách đưa:</span>
+                            <span>Khách đưa:</span>
                             <span>{{ number_format($lastCompletedOrder->paid_amount, 0, ',', '.') }} đ</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span>Tiền thừa trả lại:</span>
+                            <span>Tiền thừa:</span>
                             <strong class="text-primary">{{ number_format($lastCompletedOrder->change_amount, 0, ',', '.') }} đ</strong>
                         </div>
                         @if($lastCompletedOrder->customer)
@@ -248,7 +248,7 @@
                             @if($lastCompletedOrder->points_redeemed > 0)
                                 <div class="d-flex justify-content-between mb-1"><span>Điểm đã dùng:</span><strong>-{{ number_format($lastCompletedOrder->points_redeemed) }} điểm</strong></div>
                             @endif
-                            <div class="d-flex justify-content-between mb-1"><span>Điểm vừa tích:</span><strong class="text-success">+{{ number_format($lastCompletedOrder->points_earned) }} điểm</strong></div>
+                            <div class="d-flex justify-content-between mb-1"><span>Điểm đã tích:</span><strong class="text-success">+{{ number_format($lastCompletedOrder->points_earned) }} điểm</strong></div>
                             <div class="d-flex justify-content-between"><span>Điểm hiện có:</span><strong>{{ number_format($lastCompletedOrder->customer->point) }} điểm</strong></div>
                         @endif
                     </div>
@@ -302,7 +302,7 @@
         <div class="receipt-row"><span>Thanh toán:</span><span>{{ ['cash' => 'Tiền mặt', 'transfer' => 'Chuyển khoản'][$lastCompletedOrder->payment_method] ?? 'Khác' }}</span></div>
         @if($lastCompletedOrder->customer)
             <div class="receipt-line"></div>
-            <div class="receipt-row"><span>Điểm vừa tích:</span><span>+{{ number_format($lastCompletedOrder->points_earned) }}</span></div>
+            <div class="receipt-row"><span>Điểm đã tích:</span><span>+{{ number_format($lastCompletedOrder->points_earned) }}</span></div>
             <div class="receipt-row"><span>Điểm hiện có:</span><span>{{ number_format($lastCompletedOrder->customer->point) }}</span></div>
         @endif
         <div class="receipt-line"></div>

@@ -1,9 +1,9 @@
 <div>
-    <h5 class="fw-bold text-dark mb-3">Đăng nhập tài khoản</h5>
+    <h5 class="fw-bold text-dark mb-3">Đăng nhập</h5>
 
     <form wire:submit.prevent="login">
         <div class="mb-3">
-            <label class="form-label fw-semibold">Địa chỉ Email</label>
+            <label class="form-label fw-semibold">Email</label>
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope"></i></span>
                 <input type="email" wire:model="email" class="form-control border-start-0 @error('email') is-invalid @enderror" placeholder="admin@taphoa.com" autofocus>
@@ -34,7 +34,7 @@
 
         <div class="text-center">
             <span class="text-muted fs-7">Chưa có cửa hàng?</span>
-            <a href="{{ route('register') }}" class="text-primary fw-semibold fs-7 text-decoration-none">Đăng ký Cửa hàng mới</a>
+            <a href="{{ route('register') }}" class="text-primary fw-semibold fs-7 text-decoration-none">Đăng ký cửa hàng</a>
         </div>
     </form>
 </div>

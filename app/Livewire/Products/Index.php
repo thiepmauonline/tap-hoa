@@ -159,7 +159,7 @@ class Index extends Component
                 'image' => $imagePath,
             ]);
 
-            session()->flash('success', 'Cập nhật sản phẩm thành công!');
+            session()->flash('success', 'Đã cập nhật sản phẩm.');
         } else {
             DB::transaction(function () use ($storeId, $imagePath) {
                 $product = Product::create([
@@ -187,7 +187,7 @@ class Index extends Component
 
             });
 
-            session()->flash('success', 'Thêm sản phẩm mới thành công!');
+            session()->flash('success', 'Đã thêm sản phẩm.');
         }
 
         $this->closeModal();
@@ -199,7 +199,7 @@ class Index extends Component
 
         if (OrderItem::where('product_id', $id)->exists() || PurchaseOrderItem::where('product_id', $id)->exists()) {
             $product->update(['status' => 0]);
-            session()->flash('success', 'Sản phẩm đã có lịch sử giao dịch nên được chuyển sang ngừng kinh doanh thay vì xóa.');
+            session()->flash('success', 'Đã ngừng bán sản phẩm. Lịch sử giao dịch được giữ lại.');
 
             return;
         }
@@ -208,7 +208,7 @@ class Index extends Component
         Inventory::where('store_id', auth()->user()->store_id)->where('product_id', $id)->delete();
         $product->delete();
 
-        session()->flash('success', 'Đã xóa sản phẩm khỏi hệ thống!');
+        session()->flash('success', 'Đã xóa sản phẩm.');
     }
 
     public function render()
@@ -237,6 +237,6 @@ class Index extends Component
             'products' => $products,
             'categories' => $categories,
             'suppliers' => $suppliers,
-        ])->layout('layouts.app', ['headerTitle' => 'Quản lý Sản phẩm']);
+        ])->layout('layouts.app', ['headerTitle' => 'Sản phẩm']);
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Đăng nhập' }} - Hệ thống SaaS Tạp hóa Tích hợp AI</title>
+    <title>{{ $title ?? 'Đăng nhập' }} - Quản lý tạp hóa</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -44,8 +44,8 @@
     <div class="auth-card">
         <div class="auth-header">
             <i class="bi bi-shop fs-1 text-warning"></i>
-            <h4 class="fw-bold mt-2 mb-1">TẠP HÓA SAAS AI</h4>
-            <p class="mb-0 text-white-50 fs-7">Nền tảng Quản lý Cửa hàng & Trợ lý AI Phân tích</p>
+            <h4 class="fw-bold mt-2 mb-1">Tạp hóa</h4>
+            <p class="mb-0 text-white-50 fs-7">Quản lý bán hàng cùng trợ lý AI</p>
         </div>
 
         <div class="p-4">

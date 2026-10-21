@@ -3,12 +3,12 @@
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
         <div>
             <h4 class="fw-bold text-dark mb-1">{{ auth()->user()->store->name }}</h4>
-            <div class="text-muted fs-7">Xin chào {{ auth()->user()->name }} • Tổng quan hoạt động kinh doanh</div>
+            <div class="text-muted fs-7">Xin chào {{ auth()->user()->name }}</div>
         </div>
         <div>
             <a href="{{ route('pos') }}" class="btn btn-primary fw-semibold px-3 py-2 shadow-sm d-flex align-items-center gap-2" target="_blank">
                 <i class="bi bi-calculator"></i>
-                <span>Mở quầy bán hàng (POS)</span>
+                <span>Bán hàng</span>
             </a>
         </div>
     </div>
@@ -35,7 +35,7 @@
             <div class="card card-custom p-3 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-muted fs-7 fw-medium">Đơn hàng hôm nay</span>
+                        <span class="text-muted fs-7 fw-medium">Hóa đơn hôm nay</span>
                         <h4 class="fw-bold text-dark mt-1 mb-0">{{ $todayOrdersCount }} đơn</h4>
                     </div>
                     <div class="bg-light text-success rounded-3 p-2.5 d-flex align-items-center justify-content-center border" style="width:42px; height:42px;">
@@ -80,8 +80,8 @@
     <div class="card card-custom p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
             <div>
-                <h6 class="fw-bold text-dark mb-1">Doanh thu 7 ngày gần nhất</h6>
-                <small class="text-muted">Biểu đồ tổng hợp giá trị các đơn bán hoàn tất</small>
+                <h6 class="fw-bold text-dark mb-1">Doanh thu 7 ngày</h6>
+                <small class="text-muted">Từ các hóa đơn hoàn tất</small>
             </div>
             <span class="badge bg-light text-secondary border px-3 py-1.5 fs-7 fw-normal">
                 {{ $chartLabels[0] ?? '' }} — {{ end($chartLabels) }}
@@ -98,7 +98,7 @@
         <div class="col-xxl-7">
             <div class="card card-custom h-100">
                 <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3 px-3">
-                    <h6 class="fw-bold text-dark mb-0">Đơn hàng gần đây</h6>
+                    <h6 class="fw-bold text-dark mb-0">Hóa đơn gần đây</h6>
                     <a href="{{ route('orders.index') }}" class="btn btn-sm btn-link text-decoration-none p-0">Xem tất cả <i class="bi bi-arrow-right"></i></a>
                 </div>
                 <div class="card-body p-0">
@@ -106,7 +106,7 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-3">Mã đơn</th>
+                                    <th class="ps-3">Mã hóa đơn</th>
                                     <th>Thời gian</th>
                                     <th>Khách hàng</th>
                                     <th>Tổng tiền</th>
@@ -126,7 +126,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">Chưa có đơn hàng nào trong ngày hôm nay</td>
+                                        <td colspan="5" class="text-center text-muted py-4">Chưa có hóa đơn</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -140,7 +140,7 @@
         <div class="col-xxl-5">
             <div class="card card-custom h-100">
                 <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3 px-3">
-                    <h6 class="fw-bold text-dark mb-0">Hàng sắp hết kho</h6>
+                    <h6 class="fw-bold text-dark mb-0">Sắp hết hàng</h6>
                     <a href="{{ route('purchase-orders.create') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg me-1"></i> Nhập hàng</a>
                 </div>
                 <div class="card-body p-0">
@@ -149,14 +149,14 @@
                             <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2.5">
                                 <div>
                                     <div class="fw-semibold text-dark fs-7">{{ $lp->name }}</div>
-                                    <small class="text-muted fs-8">{{ $lp->barcode ? 'Mã: ' . $lp->barcode . ' | ' : '' }}{{ $lp->category->name ?? 'Khác' }}</small>
+                                    <small class="text-muted fs-8">{{ $lp->barcode ? 'Mã: ' . $lp->barcode . ' | ' : '' }}{{ $lp->category->name ?? 'Chưa phân loại' }}</small>
                                 </div>
                                 <span class="badge bg-light text-danger border border-danger-subtle fs-7">Còn {{ $lp->inventory->quantity ?? 0 }} {{ $lp->unit }}</span>
                             </div>
                         @empty
                             <div class="text-center text-muted py-4">
                                 <i class="bi bi-check-circle fs-3 text-success d-block mb-1"></i>
-                                Kho hàng đang ở mức an toàn
+                                Không có sản phẩm sắp hết hàng
                             </div>
                         @endforelse
                     </div>
@@ -184,7 +184,7 @@
                 data: {
                     labels: chartLabels,
                     datasets: [{
-                        label: 'Doanh thu (VNĐ)',
+                        label: 'Doanh thu (đ)',
                         data: chartValues,
                         borderColor: '#4f46e5',
                         borderWidth: 3,

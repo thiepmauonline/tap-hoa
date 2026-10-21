@@ -8,8 +8,8 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'failed' => 'Thông tin đăng nhập không chính xác.',
-    'password' => 'Mật khẩu cung cấp không đúng.',
-    'throttle' => 'Đăng nhập quá nhiều lần. Vui lòng thử lại sau :seconds giây.',
+    'failed' => 'Email hoặc mật khẩu không đúng.',
+    'password' => 'Mật khẩu không đúng.',
+    'throttle' => 'Đăng nhập quá nhiều lần. Thử lại sau :seconds giây.',
 
 ];

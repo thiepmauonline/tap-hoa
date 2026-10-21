@@ -72,6 +72,6 @@ class Dashboard extends Component
             'recentOrders' => $recentOrders,
             'chartLabels' => $chartLabels,
             'chartValues' => $chartValues,
-        ])->layout('layouts.app', ['headerTitle' => 'Bảng điều khiển & Thống kê']);
+        ])->layout('layouts.app', ['headerTitle' => 'Tổng quan']);
     }
 }

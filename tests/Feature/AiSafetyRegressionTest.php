@@ -113,6 +113,6 @@ class AiSafetyRegressionTest extends TestCase
         $this->assertSame('advice', $result['type']);
         $this->assertStringContainsString('Gợi ý cải thiện', $result['answer']);
         $result = $service->ask('Hiệu quả kinh doanh thế nào?', $user->store_id, $user->id);
-        $this->assertStringContainsString('Tổng quan kết quả kinh doanh', $result['answer']);
+        $this->assertStringContainsString('Kết quả kinh doanh', $result['answer']);
     }
 }

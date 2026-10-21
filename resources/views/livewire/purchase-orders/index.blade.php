@@ -1,7 +1,7 @@
 <div>
     <div class="card card-custom p-3 mb-4 d-flex flex-row justify-content-between align-items-center">
-        <h5 class="fw-bold text-dark mb-0">Lịch sử Phiếu Nhập hàng Kho</h5>
-        <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary fw-semibold"><i class="bi bi-cart-plus me-1"></i> Tạo Phiếu Nhập Hàng Mới</a>
+        <h5 class="fw-bold text-dark mb-0">Phiếu nhập hàng</h5>
+        <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary fw-semibold"><i class="bi bi-cart-plus me-1"></i> Tạo phiếu nhập</a>
     </div>
 
     <div class="card card-custom">
@@ -13,7 +13,7 @@
                         <th>Ngày nhập</th>
                         <th>Nhà cung cấp</th>
                         <th>Người nhập</th>
-                        <th>Tổng tiền hàng</th>
+                        <th>Tổng tiền</th>
                         <th>Trạng thái</th>
                     </tr>
                 </thead>
@@ -28,13 +28,13 @@
                                 </a>
                             </td>
                             <td>{{ $po->purchase_date->format('H:i d/m/Y') }}</td>
-                            <td class="fw-semibold text-dark">{{ $po->supplier->name ?? 'Khác' }}</td>
+                            <td class="fw-semibold text-dark">{{ $po->supplier->name ?? 'Chưa chọn' }}</td>
                             <td>{{ $po->user->name ?? 'User' }}</td>
                             <td class="fw-bold text-danger">{{ number_format($po->total_amount, 0, ',', '.') }} đ</td>
                             <td><span class="badge bg-success fs-7">Đã nhập kho</span></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">Chưa có phiếu nhập hàng nào!</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">Chưa có phiếu nhập</td></tr>
                     @endforelse
                 </tbody>
             </table>

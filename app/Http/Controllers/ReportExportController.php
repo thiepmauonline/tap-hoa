@@ -41,17 +41,17 @@ class ReportExportController extends Controller
             };
 
             if ($type === 'revenue') {
-                $write(['Ngày bán', 'Số hóa đơn', 'Doanh thu sau giảm giá/điểm', 'Giảm giá và đổi điểm', 'Giá vốn', 'Lợi nhuận gộp']);
+                $write(['Ngày bán', 'Số hóa đơn', 'Doanh thu thuần', 'Giảm giá và điểm', 'Giá vốn', 'Lợi nhuận gộp']);
                 foreach ($reports->dailyRevenue($storeId, $from, $to) as $day) {
                     $write([$day->sale_date, (int) $day->order_count, (float) $day->revenue, (float) $day->discount, (float) $day->cost, (float) $day->gross_profit]);
                 }
             } elseif ($type === 'products') {
-                $write(['Sản phẩm', 'Đơn vị', 'Số lượng bán', 'Doanh thu sau phân bổ giảm giá/điểm']);
+                $write(['Sản phẩm', 'Đơn vị', 'Số lượng bán', 'Doanh thu thuần']);
                 foreach ($reports->topProducts($storeId, $from, $to) as $product) {
                     $write([$product->name ?? 'Sản phẩm đã xóa', $product->unit, (int) $product->quantity_sold, round((float) $product->revenue, 2)]);
                 }
             } else {
-                $write(['Sản phẩm', 'Mã vạch', 'Danh mục', 'Đơn vị', 'Tồn kho hiện tại', 'Ngưỡng tối thiểu', 'Trạng thái kinh doanh']);
+                $write(['Sản phẩm', 'Mã vạch', 'Danh mục', 'Đơn vị', 'Tồn kho hiện tại', 'Tồn tối thiểu', 'Trạng thái']);
                 foreach (Product::where('store_id', $storeId)->with(['category', 'inventory'])->orderBy('id')->lazyById(200) as $product) {
                     $write([$product->name, $product->barcode ? "'".$product->barcode : '', $product->category->name ?? '', $product->unit, (int) ($product->inventory->quantity ?? 0), (int) $product->min_stock, $product->status ? 'Đang bán' : 'Ngừng bán']);
                 }

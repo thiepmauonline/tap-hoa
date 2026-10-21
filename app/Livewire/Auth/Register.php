@@ -36,9 +36,9 @@ class Register extends Component
         'store_name.required' => 'Vui lòng nhập tên cửa hàng.',
         'name.required' => 'Vui lòng nhập họ tên chủ cửa hàng.',
         'email.required' => 'Vui lòng nhập email.',
-        'email.unique' => 'Email này đã được sử dụng.',
+        'email.unique' => 'Email đã được sử dụng.',
         'password.required' => 'Vui lòng nhập mật khẩu.',
-        'password.min' => 'Mật khẩu phải tối thiểu 8 ký tự.',
+        'password.min' => 'Mật khẩu cần ít nhất 8 ký tự.',
         'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
     ];
 
@@ -71,13 +71,13 @@ class Register extends Component
         session()->regenerate();
         $this->reset('password', 'password_confirmation');
 
-        session()->flash('success', 'Đăng ký cửa hàng mới thành công!');
+        session()->flash('success', 'Đã đăng ký cửa hàng.');
 
         return redirect()->route('dashboard');
     }
 
     public function render()
     {
-        return view('livewire.auth.register')->layout('layouts.guest', ['title' => 'Đăng ký Cửa hàng']);
+        return view('livewire.auth.register')->layout('layouts.guest', ['title' => 'Đăng ký cửa hàng']);
     }
 }

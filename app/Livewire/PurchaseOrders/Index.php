@@ -23,6 +23,6 @@ class Index extends Component
 
         return view('livewire.purchase-orders.index', [
             'orders' => $orders,
-        ])->layout('layouts.app', ['headerTitle' => 'Quản lý Nhập hàng Kho']);
+        ])->layout('layouts.app', ['headerTitle' => 'Nhập hàng']);
     }
 }

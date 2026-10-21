@@ -60,7 +60,7 @@ class SettingsTest extends TestCase
             ->set('newPasswordConfirmation', 'different-password')
             ->call('changePassword')->assertHasErrors('newPasswordConfirmation');
         $form->set('newPasswordConfirmation', 'new-password-123')
-            ->call('changePassword')->assertHasNoErrors()->assertSee('Đã đổi mật khẩu thành công.')
+            ->call('changePassword')->assertHasNoErrors()->assertSee('Đã đổi mật khẩu.')
             ->assertSet('currentPassword', '')->assertSet('newPassword', '')->assertSet('newPasswordConfirmation', '');
         $this->assertTrue(Hash::check('new-password-123', $user->fresh()->password));
         $this->assertFalse(Hash::check('current-password', $user->fresh()->password));

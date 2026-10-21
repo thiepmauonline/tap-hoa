@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Quản lý Cửa hàng Tạp hóa' }} - {{ auth()->user()->store->name ?? 'SaaS POS' }}</title>
+    <title>{{ $title ?? 'Quản lý cửa hàng' }} - {{ auth()->user()->store->name ?? 'Tạp hóa' }}</title>
 
     <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -203,26 +203,26 @@
         <div class="brand">
             <i class="bi bi-shop fs-4 text-warning flex-shrink-0"></i>
             <div style="min-width: 0;">
-                <div class="text-truncate fw-bold">{{ auth()->user()->store->name ?? 'TapHoa SaaS' }}</div>
-                <small class="text-secondary fw-normal d-block text-truncate" style="font-size: 0.75rem;">Phần mềm quản lý bán hàng</small>
+                <div class="text-truncate fw-bold">{{ auth()->user()->store->name ?? 'Tạp hóa' }}</div>
+                <small class="text-secondary fw-normal d-block text-truncate" style="font-size: 0.75rem;">Quản lý bán hàng</small>
             </div>
         </div>
 
         <div class="sidebar-nav">
-            <div class="nav-heading">Tổng quan</div>
+            <div class="nav-heading">Kinh doanh</div>
             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển
+                <i class="bi bi-grid-1x2-fill"></i> Tổng quan
             </a>
             @if(auth()->user()->isManager())
             <a href="{{ route('reports.business') }}" class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-                <i class="bi bi-bar-chart-line-fill"></i> Báo cáo kinh doanh
+                <i class="bi bi-bar-chart-line-fill"></i> Báo cáo
             </a>
             @endif
             <a href="{{ route('pos') }}" class="nav-link bg-success text-white my-2 fw-semibold shadow-sm" target="_blank">
-                <i class="bi bi-calculator"></i> Bán hàng (POS)
+                <i class="bi bi-calculator"></i> Bán hàng
             </a>
 
-            <div class="nav-heading">Quản lý kho & Nhập bán</div>
+            <div class="nav-heading">Hàng hóa</div>
             @if(auth()->user()->isManager())
             <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
                 <i class="bi bi-box-seam"></i> Sản phẩm
@@ -231,16 +231,16 @@
                 <i class="bi bi-tags"></i> Danh mục
             </a>
             <a href="{{ route('inventories.index') }}" class="nav-link {{ request()->routeIs('inventories.*') ? 'active' : '' }}">
-                <i class="bi bi-stack"></i> Tồn kho & Cảnh báo
+                <i class="bi bi-stack"></i> Tồn kho
             </a>
             <a href="{{ route('purchase-orders.index') }}" class="nav-link {{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}">
-                <i class="bi bi-cart-check"></i> Nhập hàng kho
+                <i class="bi bi-cart-check"></i> Nhập hàng
             </a>
 
-            <div class="nav-heading">Đối tác & Đơn bán</div>
+            <div class="nav-heading">Giao dịch</div>
             @endif
             <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
-                <i class="bi bi-receipt"></i> Hóa đơn đã bán
+                <i class="bi bi-receipt"></i> Hóa đơn
             </a>
             @if(auth()->user()->isManager())
             <a href="{{ route('suppliers.index') }}" class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
@@ -248,23 +248,23 @@
             </a>
             @endif
             <a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-                <i class="bi bi-people"></i> Khách hàng tích điểm
+                <i class="bi bi-people"></i> Khách hàng
             </a>
 
-            <div class="nav-heading">Trợ lý & Hệ thống</div>
+            <div class="nav-heading">Hệ thống</div>
             @if(auth()->user()->isManager())
             <a href="{{ route('ai.assistant') }}" class="nav-link {{ request()->routeIs('ai.*') ? 'active' : '' }}">
-                <i class="bi bi-robot"></i> Trợ lý phân tích
+                <i class="bi bi-robot"></i> Trợ lý AI
             </a>
             @endif
 
             @if(auth()->user()->isOwner())
             <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                <i class="bi bi-person-gear"></i> Nhân viên & Phân quyền
+                <i class="bi bi-person-gear"></i> Nhân viên
             </a>
             @endif
             <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                <i class="bi bi-gear"></i> Cài đặt & Tài khoản
+                <i class="bi bi-gear"></i> Cài đặt
             </a>
         </div>
     </div>
@@ -275,7 +275,7 @@
         <nav class="navbar navbar-expand navbar-custom sticky-top">
             <div class="container-fluid">
                 <span class="navbar-text fw-semibold text-dark fs-5">
-                    {{ $headerTitle ?? 'Hệ thống Quản lý Bán lẻ' }}
+                    {{ $headerTitle ?? 'Quản lý bán hàng' }}
                 </span>
 
                 <ul class="navbar-nav ms-auto align-items-center gap-3">
@@ -300,7 +300,7 @@
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                            <li><a class="dropdown-item" href="{{ route('settings.index') }}"><i class="bi bi-person me-2"></i> Cài đặt & Tài khoản</a></li>
+                            <li><a class="dropdown-item" href="{{ route('settings.index') }}"><i class="bi bi-person me-2"></i> Cài đặt</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">

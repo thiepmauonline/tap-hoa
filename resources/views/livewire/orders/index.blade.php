@@ -4,12 +4,12 @@
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Tìm theo mã hóa đơn, tên/SĐT khách...">
+                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Tìm mã hóa đơn, tên hoặc SĐT">
                 </div>
             </div>
             <div class="col-md-2">
                 <select wire:model.live="paymentMethod" class="form-select">
-                    <option value="">-- Tất cả phương thức --</option>
+                    <option value="">Tất cả phương thức</option>
                     <option value="cash">Tiền mặt</option>
                     <option value="transfer">Chuyển khoản</option>
                 </select>
@@ -22,7 +22,7 @@
                 </select>
             </div>
             <div class="col-md-4 text-md-end">
-                <a href="{{ route('pos') }}" target="_blank" class="btn btn-primary fw-semibold"><i class="bi bi-calculator me-1"></i> Mở quầy bán hàng POS</a>
+                <a href="{{ route('pos') }}" target="_blank" class="btn btn-primary fw-semibold"><i class="bi bi-calculator me-1"></i> Bán hàng</a>
             </div>
         </div>
     </div>
@@ -61,11 +61,11 @@
                             <td class="fw-bold text-dark">{{ number_format($ord->total_amount, 0, ',', '.') }} đ</td>
                             <td><span class="badge {{ $ord->status === 'cancelled' ? 'bg-danger' : 'bg-success' }}">{{ $ord->status === 'cancelled' ? 'Đã hủy' : 'Hoàn tất' }}</span></td>
                             <td class="text-end pe-3">
-                                <button wire:click="showDetail({{ $ord->id }})" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem đơn</button>
+                                <button wire:click="showDetail({{ $ord->id }})" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem</button>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="text-center text-muted py-4">Không tìm thấy hóa đơn nào!</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">Không tìm thấy hóa đơn</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -81,7 +81,7 @@
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Chi tiết Hóa đơn: {{ $selectedOrder->order_code }}</h5>
+                    <h5 class="modal-title fw-bold">Hóa đơn: {{ $selectedOrder->order_code }}</h5>
                     <button wire:click="closeDetail" type="button" class="btn-close"></button>
                 </div>
                 <div class="modal-body p-3">
@@ -93,12 +93,12 @@
                     <div class="mb-3 border-bottom pb-2 fs-7">
                         <div><strong>Ngày bán:</strong> {{ $selectedOrder->order_date->format('H:i:s d/m/Y') }}</div>
                         <div><strong>Khách hàng:</strong> {{ $selectedOrder->customer->name ?? 'Khách lẻ' }} @if($selectedOrder->customer?->phone)({{ $selectedOrder->customer->phone }})@endif</div>
-                        <div><strong>Thu ngân:</strong> {{ $selectedOrder->user->name ?? 'N/A' }}</div>
+                        <div><strong>Thu ngân:</strong> {{ $selectedOrder->user->name ?? 'Không xác định' }}</div>
                         <div><strong>Phương thức:</strong> 
                             @if($selectedOrder->payment_method === 'cash')
                                 Tiền mặt
                             @elseif($selectedOrder->payment_method === 'transfer')
-                                Chuyển khoản ngân hàng
+                                Chuyển khoản
                             @else
                                 Khác
                             @endif
@@ -108,17 +108,17 @@
                     @if($selectedOrder->status === 'cancelled')
                         <div class="alert alert-danger">
                             <strong>HÓA ĐƠN ĐÃ HỦY</strong>
-                            <div>{{ $selectedOrder->cancelled_at?->format('H:i d/m/Y') }} · {{ $selectedOrder->cancelledBy->name ?? 'N/A' }}</div>
+                            <div>{{ $selectedOrder->cancelled_at?->format('H:i d/m/Y') }} · {{ $selectedOrder->cancelledBy->name ?? 'Không xác định' }}</div>
                             <div>Lý do: {{ $selectedOrder->cancellation_reason }}</div>
                             <div>Đã hoàn {{ number_format($selectedOrder->total_amount, 0, ',', '.') }} đ cho khách.</div>
                         </div>
                     @endif
 
-                    <h6 class="fw-bold text-dark fs-7">Danh sách sản phẩm mua:</h6>
+                    <h6 class="fw-bold text-dark fs-7">Sản phẩm:</h6>
                     <table class="table table-sm border mb-3">
                         <thead class="table-light">
                             <tr>
-                                <th>Món</th>
+                                <th>Sản phẩm</th>
                                 <th>SL</th>
                                 <th>Đơn giá</th>
                                 <th class="text-end">Thành tiền</th>
@@ -127,7 +127,7 @@
                         <tbody>
                             @foreach($selectedOrder->items as $item)
                                 <tr>
-                                    <td>{{ $item->product->name ?? 'N/A' }}</td>
+                                    <td>{{ $item->product->name ?? 'Không xác định' }}</td>
                                     <td>{{ $item->quantity }}</td>
                                     <td>{{ number_format($item->price, 0, ',', '.') }}</td>
                                     <td class="text-end fw-bold">{{ number_format($item->subtotal, 0, ',', '.') }} đ</td>
@@ -143,33 +143,33 @@
                         </div>
                         @if($selectedOrder->discount_amount > 0)
                             <div class="d-flex justify-content-between mb-1 text-danger">
-                                <span>Giảm giá / Dùng điểm:</span>
+                                <span>Giảm giá và điểm:</span>
                                 <span>-{{ number_format($selectedOrder->discount_amount, 0, ',', '.') }} đ</span>
                             </div>
                         @endif
                         <div class="d-flex justify-content-between fw-bold fs-6 text-dark border-top pt-1 mb-2">
-                            <span>Khách cần trả:</span>
+                            <span>Tổng thanh toán:</span>
                             <span class="text-primary">{{ number_format($selectedOrder->total_amount, 0, ',', '.') }} đ</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1 text-muted fs-8">
-                            <span>Tiền khách đưa:</span>
+                            <span>Khách đưa:</span>
                             <span>{{ number_format($selectedOrder->paid_amount, 0, ',', '.') }} đ</span>
                         </div>
                         @if($selectedOrder->change_amount > 0)
                             <div class="d-flex justify-content-between text-success fs-8">
-                                <span>Tiền thối lại:</span>
+                                <span>Tiền thừa:</span>
                                 <span>{{ number_format($selectedOrder->change_amount, 0, ',', '.') }} đ</span>
                             </div>
                         @endif
                     </div>
                     @if(auth()->user()->isManager() && $selectedOrder->status === 'completed')
-                        <form class="d-print-none" wire:submit="cancelOrder({{ $selectedOrder->id }})" wire:confirm="Bạn xác nhận đã nhận lại toàn bộ hàng và hoàn tiền cho khách? Hóa đơn sẽ bị hủy, hoàn kho và đảo điểm thưởng.">
+                        <form class="d-print-none" wire:submit="cancelOrder({{ $selectedOrder->id }})" wire:confirm="Đã nhận đủ hàng và hoàn tiền cho khách? Hủy hóa đơn sẽ hoàn kho, hoàn điểm đã dùng và thu hồi điểm đã tích.">
                             <div class="border-top mt-3 pt-3">
-                                <p class="small text-muted">Chỉ hủy khi đã nhận lại toàn bộ hàng và hoàn {{ number_format($selectedOrder->total_amount, 0, ',', '.') }} đ cho khách. Thao tác không thể hoàn tác.</p>
+                                <p class="small text-muted">Chỉ hủy sau khi nhận đủ hàng và hoàn {{ number_format($selectedOrder->total_amount, 0, ',', '.') }} đ cho khách. Không thể hoàn tác.</p>
                                 <label for="cancellationReason" class="form-label fw-semibold">Lý do hủy hóa đơn</label>
-                                <textarea id="cancellationReason" wire:model="cancellationReason" class="form-control" rows="2" maxlength="255" required placeholder="Ví dụ: Khách trả lại toàn bộ hàng"></textarea>
+                                <textarea id="cancellationReason" wire:model="cancellationReason" class="form-control" rows="2" maxlength="255" required placeholder="VD: Khách trả lại toàn bộ hàng"></textarea>
                                 @error('cancellationReason')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                <button type="submit" class="btn btn-outline-danger mt-2" wire:loading.attr="disabled" wire:target="cancelOrder">Hủy toàn bộ hóa đơn</button>
+                                <button type="submit" class="btn btn-outline-danger mt-2" wire:loading.attr="disabled" wire:target="cancelOrder">Hủy hóa đơn</button>
                             </div>
                         </form>
                     @endif

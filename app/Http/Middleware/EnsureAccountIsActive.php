@@ -18,7 +18,7 @@ class EnsureAccountIsActive
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->with('error', 'Tài khoản hoặc cửa hàng đã bị khóa hay hết hạn sử dụng.');
+            return redirect()->route('login')->with('error', 'Tài khoản hoặc cửa hàng bị khóa hoặc hết hạn.');
         }
 
         return $next($request);

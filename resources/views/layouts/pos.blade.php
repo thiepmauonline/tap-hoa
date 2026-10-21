@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Màn hình Bán hàng POS - {{ auth()->user()->store->name ?? 'Tạp Hóa' }}</title>
+    <title>Bán hàng - {{ auth()->user()->store->name ?? 'Tạp hóa' }}</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -199,10 +199,10 @@
     <div class="pos-header">
         <div class="d-flex align-items-center gap-3">
             <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-sm text-decoration-none">
-                <i class="bi bi-arrow-left"></i> Về Quản trị
+                <i class="bi bi-arrow-left"></i> Về quản lý
             </a>
             <span class="pos-title fw-bold fs-5 text-warning">
-                <i class="bi bi-calculator-fill me-1"></i> BÁN HÀNG TẠI QUẦY (POS)
+                <i class="bi bi-calculator-fill me-1"></i> Bán hàng
             </span>
             <span class="pos-store-name badge bg-secondary ms-2">{{ auth()->user()->store->name ?? 'Cửa hàng' }}</span>
         </div>
@@ -210,7 +210,7 @@
         <div class="d-flex align-items-center gap-3">
             <span class="text-light fs-7">Thu ngân: <strong>{{ auth()->user()->name }}</strong></span>
             <a href="{{ route('orders.index') }}" target="_blank" class="btn btn-dark btn-sm">
-                <i class="bi bi-clock-history me-1"></i> Lịch sử đơn
+                <i class="bi bi-clock-history me-1"></i> Hóa đơn
             </a>
         </div>
     </div>
@@ -239,7 +239,7 @@
             const pageHeightMm = Math.max(60, contentHeightMm);
             const printWindow = window.open('', '_blank', 'width=420,height=700');
             if (!printWindow) {
-                alert('Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup cho trang này.');
+                alert('Cửa sổ in bị chặn. Vui lòng cho phép cửa sổ bật lên để in hóa đơn.');
                 return;
             }
 

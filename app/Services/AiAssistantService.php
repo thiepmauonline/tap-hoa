@@ -223,15 +223,11 @@ TEXT;
         $modelsToTry = [$configuredModel];
 
         $systemInstruction = <<<'INSTRUCTION'
-Bạn là trợ lý thông minh, thân thiện và đáng tin cậy hỗ trợ quản lý bán lẻ cho cửa hàng tạp hóa.
-Phong cách giao tiếp:
-1. Giao tiếp tự nhiên, văn minh và ấm áp như một người cộng sự ngoài đời thực:
-   - Khi người dùng chào hỏi ("chào", "hello", "bạn là ai", v.v.), hỏi thăm sức khỏe hoặc trò chuyện thông thường: Hãy đáp lại niềm nở, tự nhiên, ngắn gọn và giới thiệu vai trò sẵn sàng hỗ trợ của mình.
-   - Tuyệt đối không trả lời máy móc, dập khuôn, không dùng khẩu hiệu sáo rỗng.
-2. Khi người dùng hỏi về hoạt động kinh doanh (doanh thu, lợi nhuận, sản phẩm bán chạy, hàng tồn kho, gợi ý nhập hàng, chiến lược bán lẻ):
-   - Sử dụng các số liệu thực tế được cung cấp trong phần DỮ LIỆU CỬA HÀNG để phân tích chính xác, súc tích và có chiều sâu.
-   - Đưa ra các gợi ý hành động cụ thể, khả thi cho cửa hàng tạp hóa (nhập hàng, xả tồn, combo khuyến mãi, nhắc khách dùng điểm...).
-3. Trình bày bằng định dạng Markdown rõ ràng, dễ đọc, làm nổi bật các con số và tên sản phẩm.
+Bạn là trợ lý quản lý cửa hàng tạp hóa. Trả lời bằng tiếng Việt, ngắn gọn và chuyên nghiệp.
+- Đi thẳng vào câu hỏi; khi chào hỏi, đáp trong 1–2 câu.
+- Phân tích dựa trên dữ liệu cửa hàng được cung cấp, không tự tạo số liệu.
+- Nêu kết quả chính trước, sau đó gợi ý hành động cụ thể nếu cần.
+- Dùng Markdown dễ đọc, làm nổi bật số liệu và tên sản phẩm; tránh lặp ý và lời dẫn dài.
 INSTRUCTION;
 
         $fullPrompt = "=== DỮ LIỆU VẬN HÀNH THỰC TẾ CỬA HÀNG ===\n{$contextText}\n\n=== NGƯỜI DÙNG HỎI HOẶC TRÒ CHUYỆN ===\n\"{$question}\"\n\nHãy phản hồi một cách tự nhiên, đúng trọng tâm và phù hợp nhất với lời nhắn trên:";
@@ -287,7 +283,7 @@ INSTRUCTION;
         }
 
         $model = config('services.openai.model', 'gpt-4o-mini');
-        $systemPrompt = "Bạn là trợ lý hỗ trợ quản lý bán lẻ cho cửa hàng tạp hóa. Hãy trả lời trực tiếp, rõ ràng, gãy gọn bằng tiếng Việt dựa trên dữ liệu cửa hàng sau:\n{$contextText}\nKhông chào hỏi rườm rà, không dùng văn phong máy móc, đưa ra số liệu cụ thể và gợi ý hành động thiết thực.";
+        $systemPrompt = "Bạn là trợ lý quản lý cửa hàng tạp hóa. Trả lời bằng tiếng Việt, ngắn gọn và chuyên nghiệp dựa trên dữ liệu sau:\n{$contextText}\nNêu kết quả chính trước, dùng Markdown dễ đọc và gợi ý hành động khi cần. Không tự tạo số liệu, không lặp ý. Khi chào hỏi, đáp trong 1–2 câu.";
 
         try {
             $response = Http::connectTimeout(3)->timeout(10)->withToken($openaiKey)->post('https://api.openai.com/v1/chat/completions', [
@@ -329,67 +325,62 @@ INSTRUCTION;
 
         // 0. Chào hỏi & Giao tiếp tự nhiên
         if (preg_match('/^(chào|chao|hello|hi|helo|alo|hế lô|ê|êi|hey)(?:[\s!,.?]|$)/iu', $lower) || str_contains($lower, 'bạn là ai') || str_contains($lower, 'ai đấy') || str_contains($lower, 'bạn tên gì') || str_contains($lower, 'giới thiệu')) {
-            return "Chào bạn! Tôi là trợ lý hỗ trợ quản lý và phân tích dữ liệu cho cửa hàng **{$data['store_name']}**.\n\n".
-                   "Tôi luôn ở đây để giúp bạn theo dõi doanh thu hàng ngày, xem các món bán chạy, phát hiện hàng sắp hết kho hoặc tìm các mặt hàng tồn lâu ngày để lên kế hoạch nhập/xả hàng kịp thời.\n\n".
-                   'Hôm nay bạn cần kiểm tra thông tin gì của cửa hàng?';
+            return "Chào bạn, tôi là trợ lý của **{$data['store_name']}**. Tôi có thể tra cứu doanh thu, sản phẩm bán chạy và tồn kho.\n\nBạn cần xem thông tin nào?";
         }
 
         // Hỏi thăm sức khỏe / tâm sự / trạng thái
         if (str_contains($lower, 'khỏe không') || str_contains($lower, 'khoe khong') || str_contains($lower, 'dạo này thế nào') || str_contains($lower, 'sao rồi') || str_contains($lower, 'ổn không') || str_contains($lower, 'on khong')) {
-            return "Cảm ơn bạn đã hỏi thăm! Tôi luôn sẵn sàng 24/7 để đồng hành cùng bạn quản lý tiệm.\n\n".
-                   'Hôm nay tình hình buôn bán thế nào rồi bạn? Cần kiểm tra doanh thu trong ngày hay tình hình hàng tồn kho thì cứ bảo tôi nhé!';
+            return 'Cảm ơn bạn. Tôi sẵn sàng hỗ trợ tra cứu doanh thu và tồn kho.';
         }
 
         // Tán gẫu / Than phiền buôn bán
         if (str_contains($lower, 'ế quá') || str_contains($lower, 'bán ế') || str_contains($lower, 'vắng khách') || str_contains($lower, 'chán quá') || str_contains($lower, 'mệt quá') || str_contains($lower, 'buồn quá')) {
-            return "Kinh doanh bán lẻ sẽ có những ngày vắng khách, bạn đừng nản nhé!\n\n".
-                   'Bạn có thể thử kiểm tra danh sách **hàng tồn lâu ngày** để tạo combo giảm giá nhẹ hoặc sắp xếp lại kệ trưng bày gần cửa ra vào để hút khách ghé tiệm xem sao nhé. Cần tôi tra cứu danh sách tồn kho hay gợi ý giải pháp tăng doanh thu không?';
+            return 'Những ngày vắng khách có thể khiến bạn áp lực. Bạn có thể kiểm tra **hàng tồn lâu** để chọn sản phẩm khuyến mãi hoặc điều chỉnh cách trưng bày.';
         }
 
         // Lời chúc & Tạm biệt
         if (str_contains($lower, 'buổi sáng') || str_contains($lower, 'chúc ngày mới') || str_contains($lower, 'chúc bán đắt') || str_contains($lower, 'buôn may bán đắt')) {
-            return 'Cảm ơn bạn rất nhiều! Chúc cửa hàng hôm nay buôn may bán đắt, khách vào nườm nượp và thanh toán thuận lợi nhé!';
+            return 'Cảm ơn bạn. Chúc cửa hàng kinh doanh thuận lợi.';
         }
 
         if (str_contains($lower, 'tạm biệt') || str_contains($lower, 'tam biet') || str_contains($lower, 'bye') || str_contains($lower, 'hẹn gặp lại')) {
-            return 'Tạm biệt bạn! Chúc cửa hàng kinh doanh luôn phát đạt. Khi nào cần kiểm tra số liệu hay hàng hóa bạn cứ mở lại trợ lý nhé!';
+            return 'Tạm biệt, hẹn gặp lại bạn.';
         }
 
         // Lời cảm ơn / phản hồi tích cực
         if (str_contains($lower, 'cảm ơn') || str_contains($lower, 'cam on') || str_contains($lower, 'thank') || $lower === 'ok' || $lower === 'oke' || $lower === 'tốt' || $lower === 'tuyệt') {
-            return 'Rất sẵn lòng hỗ trợ bạn! Cần kiểm tra thêm số liệu bán hàng hay tình hình kho, bạn cứ nhắn nhé.';
+            return 'Rất vui được hỗ trợ bạn.';
         }
 
         // Hỏi về chức năng / năng lực
         if (str_contains($lower, 'làm được gì') || str_contains($lower, 'chức năng') || str_contains($lower, 'giúp gì') || str_contains($lower, 'hướng dẫn')) {
-            return "Tôi có thể hỗ trợ bạn các công việc sau:\n\n".
-                   "1. **Phân tích bán chạy**: Xem các mặt hàng có doanh số và số lượng bán tốt nhất.\n".
-                   "2. **Cảnh báo hết kho**: Phát hiện sản phẩm chạm ngưỡng an toàn và gợi ý số lượng cần nhập.\n".
-                   "3. **Rà soát hàng tồn lâu**: Tìm các món trên 45 ngày chưa bán được để giải phóng vốn đọng.\n".
-                   "4. **Báo cáo doanh thu & lợi nhuận**: Tổng hợp doanh thu hôm nay, tuần này và biên lợi nhuận gộp.\n".
-                   "5. **Tư vấn kinh doanh**: Gợi ý các giải pháp tăng doanh số và tối ưu vận hành tiệm.\n\n".
-                   'Bạn muốn xem mục nào trước?';
+            return "Tôi có thể hỗ trợ:\n\n".
+                   "- Tra cứu doanh thu và lợi nhuận.\n".
+                   "- Thống kê sản phẩm bán chạy.\n".
+                   "- Cảnh báo sắp hết hàng và gợi ý nhập hàng.\n".
+                   "- Tìm hàng tồn trên 45 ngày.\n".
+                   '- Gợi ý tăng doanh thu.';
         }
 
         // 1. Phân tích sản phẩm bán chạy (Top selling)
         if (str_contains($lower, 'bán chạy') || str_contains($lower, 'chạy nhất') || str_contains($lower, 'hot') || str_contains($lower, 'bán nhiều')) {
             $top = $data['top_products'];
             if (empty($top) || $top->isEmpty()) {
-                return 'Hiện tại cửa hàng chưa ghi nhận đủ dữ liệu hóa đơn bán ra để thống kê top bán chạy.';
+                return 'Chưa có dữ liệu bán hàng trong 30 ngày qua.';
             }
 
-            $msg = "**Top sản phẩm bán chạy nhất (30 ngày qua):**\n\n";
+            $msg = "**Sản phẩm bán chạy (30 ngày):**\n\n";
             foreach ($top as $idx => $item) {
                 $stt = $idx + 1;
                 $name = $item->name ?? 'Sản phẩm';
                 $sales = number_format($item->total_sales, 0, ',', '.');
-                $msg .= "{$stt}. **{$name}**: Đã bán **{$item->total_qty}** {$item->unit} (Doanh số: {$sales} đ)\n";
+                $msg .= "{$stt}. **{$name}**: **{$item->total_qty}** {$item->unit} · Doanh thu: {$sales} đ\n";
             }
 
             $best = $top->first();
-            $msg .= "\n**Gợi ý vận hành:**\n".
-                    "- Mặt hàng **{$best->name}** có lượng tiêu thụ cao nhất, nên duy trì mức tồn kho đệm ổn định để tránh hết hàng.\n".
-                    '- Bố trí các sản phẩm bán chạy ở vị trí dễ nhìn hoặc gần quầy thu ngân để khách tiện lấy thêm.';
+            $msg .= "\n**Gợi ý:**\n".
+                    "- Duy trì đủ tồn kho cho **{$best->name}**, sản phẩm bán chạy nhất.\n".
+                    '- Đặt hàng bán chạy ở vị trí dễ thấy hoặc gần quầy thu ngân.';
 
             return $msg;
         }
@@ -398,22 +389,22 @@ INSTRUCTION;
         if (str_contains($lower, 'tồn kho lâu') || str_contains($lower, 'tồn lâu') || str_contains($lower, 'hàng ế') || str_contains($lower, 'chậm luân chuyển') || str_contains($lower, 'xả hàng') || str_contains($lower, 'không bán được') || str_contains($lower, 'chưa bán được')) {
             $slow = $data['slow_stock_products'];
             if (empty($slow) || $slow->isEmpty()) {
-                return 'Hiện tại cửa hàng không có sản phẩm nào tồn kho quá 45 ngày chưa bán được. Tốc độ luân chuyển hàng hóa đang ở mức tốt.';
+                return 'Không có sản phẩm tồn kho quá 45 ngày chưa bán.';
             }
 
-            $msg = "**Danh sách sản phẩm tồn kho chậm luân chuyển (>45 ngày):**\n\n";
+            $msg = "**Hàng tồn lâu (trên 45 ngày):**\n\n";
 
             foreach ($slow as $idx => $p) {
                 $stt = $idx + 1;
                 $qty = $p->inventory->quantity ?? 0;
-                $lastSold = $p->last_sold_at ? $p->last_sold_at->format('d/m/Y') : 'Chưa phát sinh đơn bán';
-                $msg .= "{$stt}. **{$p->name}**: Còn tồn **{$qty} {$p->unit}** (Lần bán gần nhất: {$lastSold})\n";
+                $lastSold = $p->last_sold_at ? $p->last_sold_at->format('d/m/Y') : 'Chưa từng bán';
+                $msg .= "{$stt}. **{$p->name}**: Tồn **{$qty} {$p->unit}** · Bán gần nhất: {$lastSold}\n";
             }
 
-            $msg .= "\n**Đề xuất xử lý:**\n".
-                    "- Ghép bán theo dạng combo (ví dụ: mua kèm sản phẩm bán chạy để giảm giá nhẹ hoặc tặng kèm).\n".
-                    "- Đưa ra khu vực kệ đầu dãy hoặc gần lối đi để tăng cơ hội tiếp cận khách.\n".
-                    '- Tạm ngừng nhập thêm các mã hàng này cho đến khi giải phóng hết lượng tồn cũ.';
+            $msg .= "\n**Gợi ý:**\n".
+                    "- Bán kèm hàng bán chạy hoặc giảm giá phù hợp.\n".
+                    "- Trưng bày ở đầu kệ hoặc gần lối đi.\n".
+                    '- Tạm ngừng nhập thêm đến khi bán hết tồn cũ.';
 
             return $msg;
         }
@@ -422,31 +413,31 @@ INSTRUCTION;
         if (str_contains($lower, 'sắp hết') || str_contains($lower, 'hết hàng') || str_contains($lower, 'nhập hàng') || str_contains($lower, 'gợi ý nhập') || str_contains($lower, 'tồn kho an toàn')) {
             $low = $data['low_stock_products'];
             if (empty($low) || $low->isEmpty()) {
-                return 'Kho hàng đang ở mức an toàn. Tất cả sản phẩm đều có số lượng tồn trên ngưỡng tối thiểu.';
+                return 'Không có sản phẩm sắp hết hàng. Tồn kho đều trên ngưỡng tối thiểu.';
             }
 
-            $msg = "**Danh sách sản phẩm sắp hết kho cần bổ sung:**\n\n";
+            $msg = "**Sản phẩm sắp hết hàng:**\n\n";
 
             foreach ($low as $p) {
                 $qty = $p->inventory->quantity ?? 0;
-                $sup = $p->supplier->name ?? 'Chưa gán NCC';
+                $sup = $p->supplier->name ?? 'Chưa chọn nhà cung cấp';
                 $suggestQty = max(10, $p->min_stock * 2 - $qty);
-                $msg .= "- **{$p->name}**: Còn tồn **{$qty} {$p->unit}** (Ngưỡng tối thiểu: {$p->min_stock} {$p->unit})\n".
-                        "  → Gợi ý nhập thêm: khoảng **{$suggestQty} {$p->unit}** (NCC: {$sup})\n";
+                $msg .= "- **{$p->name}**: Tồn **{$qty} {$p->unit}**, tối thiểu {$p->min_stock} {$p->unit}.\n".
+                        "  Gợi ý nhập: **{$suggestQty} {$p->unit}** · NCC: {$sup}\n";
             }
 
-            $msg .= "\nBạn có thể vào mục **Nhập hàng kho** để tạo phiếu nhập từ nhà cung cấp tương ứng.";
+            $msg .= "\nTạo phiếu tại **Nhập hàng**.";
 
             return $msg;
         }
 
         // 5. Đề xuất giải pháp cải thiện kinh doanh (Business Improvement Recommendations)
         if (str_contains($lower, 'cải thiện') || str_contains($lower, 'tăng doanh thu') || str_contains($lower, 'đề xuất') || str_contains($lower, 'chiến lược') || str_contains($lower, 'tư vấn') || str_contains($lower, 'giải pháp')) {
-            return "**Gợi ý cải thiện hiệu quả kinh doanh cửa hàng:**\n\n".
-                   "1. **Tập trung vào nhóm hàng chủ lực**: Đảm bảo nhóm 5 mặt hàng bán chạy luôn có đủ tồn kho và đàm phán giá nhập tốt hơn từ nhà cung cấp.\n".
-                   "2. **Giải phóng hàng tồn đọng**: Tạo các chương trình combo hoặc giảm giá nhẹ các mặt hàng chậm luân chuyển để thu hồi vốn lưu động.\n".
-                   "3. **Tận dụng dữ liệu khách hàng**: Hệ thống đang có {$data['total_customers']} khách hàng tích điểm, khuyến khích khách sử dụng điểm trừ tiền tại quầy để tăng tỷ lệ quay lại.\n".
-                   '4. **Gia tăng giá trị giỏ hàng**: Đặt thêm các sản phẩm tiêu dùng nhỏ, tiện lợi tại quầy tính tiền để khách mua kèm khi thanh toán.';
+            return "**Gợi ý cải thiện kinh doanh:**\n\n".
+                   "1. **Hàng bán chạy**: Giữ đủ tồn cho 5 sản phẩm dẫn đầu, thương lượng giá nhập tốt hơn.\n".
+                   "2. **Hàng tồn lâu**: Bán kèm hoặc giảm giá để thu hồi vốn.\n".
+                   "3. **Khách hàng**: Nhắc {$data['total_customers']} khách tích điểm dùng điểm khi thanh toán.\n".
+                   '4. **Bán kèm**: Đặt sản phẩm nhỏ, tiện dụng gần quầy thu ngân.';
         }
 
         // 4. Báo cáo doanh thu & Lợi nhuận tổng thể
@@ -457,23 +448,22 @@ INSTRUCTION;
             $gross30 = number_format($data['gross_profit_30_days'], 0, ',', '.');
             $growthSign = $data['growth_rate_7_days'] >= 0 ? 'tăng +' : 'giảm ';
 
-            return "**Tổng quan kết quả kinh doanh:**\n\n".
-                   "- **Hôm nay**: {$todayRev} đ ({$data['today_orders']} đơn bán)\n".
-                   "- **7 ngày gần nhất**: {$rev7} đ ({$growthSign}{$data['growth_rate_7_days']}% so với 7 ngày trước)\n".
-                   "- **30 ngày qua**: Doanh thu {$rev30} đ, lợi nhuận gộp ước tính {$gross30} đ (Biên lợi nhuận: {$data['profit_margin_30_days']}%)\n\n".
+            return "**Kết quả kinh doanh:**\n\n".
+                   "- **Hôm nay**: {$todayRev} đ ({$data['today_orders']} hóa đơn)\n".
+                   "- **7 ngày**: {$rev7} đ ({$growthSign}{$data['growth_rate_7_days']}% so với 7 ngày trước)\n".
+                   "- **30 ngày**: Doanh thu {$rev30} đ, lợi nhuận gộp ước tính {$gross30} đ (biên lợi nhuận {$data['profit_margin_30_days']}%)\n\n".
                    '**Nhận xét:** '.($data['growth_rate_7_days'] >= 0
-                       ? 'Doanh số 7 ngày gần đây đang có xu hướng tăng trưởng so với tuần trước.'
-                       : 'Doanh số 7 ngày gần đây có phần chậm lại so với tuần trước, bạn có thể cân nhắc các mặt hàng ưu đãi ngày cuối tuần.');
+                       ? 'Doanh thu 7 ngày không giảm so với kỳ trước.'
+                       : 'Doanh thu 7 ngày giảm so với kỳ trước. Cân nhắc ưu đãi cuối tuần.');
         }
 
         // 6. Trả lời mặc định thân thiện khi câu hỏi chưa rõ ý
-        return "Chào bạn, tôi chưa hiểu rõ câu hỏi này lắm. Bạn có thể hỏi tôi về các thông tin như:\n\n".
-               "- *Doanh thu và lợi nhuận hôm nay hoặc 30 ngày qua*\n".
-               "- *Sản phẩm nào bán chạy nhất tháng này?*\n".
-               "- *Có mặt hàng nào sắp hết cần nhập kho không?*\n".
-               "- *Sản phẩm nào tồn kho lâu chưa bán được?*\n".
-               "- *Gợi ý giải pháp tăng doanh thu cửa hàng*\n\n".
-               'Bạn muốn kiểm tra thông tin nào trước?';
+        return "Vui lòng nêu rõ nội dung cần tra cứu, ví dụ:\n\n".
+               "- Doanh thu 30 ngày qua?\n".
+               "- Sản phẩm bán chạy trong 30 ngày?\n".
+               "- Sản phẩm nào sắp hết hàng?\n".
+               "- Sản phẩm nào tồn kho lâu?\n".
+               '- Gợi ý tăng doanh thu?';
     }
 
     /**

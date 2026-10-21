@@ -67,7 +67,7 @@ class Cashier extends Component
             ->first();
 
         if (! $product) {
-            session()->flash('error', 'Không tìm thấy sản phẩm có mã vạch: '.$this->barcodeInput);
+            session()->flash('error', 'Không tìm thấy mã vạch: '.$this->barcodeInput);
 
             return;
         }
@@ -109,8 +109,8 @@ class Cashier extends Component
         $this->resetValidation();
         Validator::make(['cart' => $qty], ['cart' => 'required|integer|min:0|max:2147483647'], [
             'cart.required' => 'Vui lòng nhập số lượng sản phẩm.',
-            'cart.integer' => 'Số lượng sản phẩm phải là số nguyên.',
-            'cart.min' => 'Số lượng sản phẩm không được âm.',
+            'cart.integer' => 'Số lượng phải là số nguyên.',
+            'cart.min' => 'Số lượng không được âm.',
         ])->validate();
         $qty = (int) $qty;
         if (! isset($this->cart[$productId])) {
@@ -131,7 +131,7 @@ class Cashier extends Component
 
         $stock = (int) ($product->inventory->quantity ?? 0);
         if ($qty > $stock) {
-            session()->flash('error', 'Số lượng vượt quá tồn kho hiện tại ('.$stock.').');
+            session()->flash('error', 'Số lượng vượt tồn kho ('.$stock.').');
 
             return;
         }
@@ -227,7 +227,7 @@ class Cashier extends Component
     public function checkout(): void
     {
         if (empty($this->cart)) {
-            session()->flash('error', 'Giỏ hàng đang trống!');
+            session()->flash('error', 'Giỏ hàng trống.');
 
             return;
         }
@@ -264,7 +264,7 @@ class Cashier extends Component
                     $product = $products->get((int) ($cartItem['id'] ?? 0));
                     $quantity = filter_var($cartItem['qty'] ?? null, FILTER_VALIDATE_INT);
                     if (! $product || $quantity === false || $quantity < 1 || $quantity > 2147483647) {
-                        throw ValidationException::withMessages(['cart' => 'Giỏ hàng có sản phẩm không hợp lệ.']);
+                        throw ValidationException::withMessages(['cart' => 'Sản phẩm trong giỏ không hợp lệ.']);
                     }
                     $items[] = [
                         'product' => $product,
@@ -277,10 +277,10 @@ class Cashier extends Component
 
                 $subtotal = array_sum(array_column($items, 'subtotal'));
                 if ($subtotal > 9999999999999.99) {
-                    throw ValidationException::withMessages(['cart' => 'Giá trị hóa đơn vượt quá giới hạn cho phép.']);
+                    throw ValidationException::withMessages(['cart' => 'Tổng tiền hóa đơn vượt giới hạn.']);
                 }
                 if ($this->discount > $subtotal) {
-                    throw ValidationException::withMessages(['discount' => 'Giảm giá không được vượt quá tổng tiền hàng.']);
+                    throw ValidationException::withMessages(['discount' => 'Giảm giá vượt tổng tiền hàng.']);
                 }
 
                 $customer = null;
@@ -295,22 +295,22 @@ class Cashier extends Component
                 }
 
                 if ($this->usePoints && ! $customer) {
-                    throw ValidationException::withMessages(['usePoints' => 'Vui lòng chọn khách hàng trước khi dùng điểm.']);
+                    throw ValidationException::withMessages(['usePoints' => 'Chọn khách hàng để dùng điểm.']);
                 }
 
                 $pointsRedeemed = $this->usePoints ? $this->pointsToRedeem : 0;
                 $maxPointsByOrder = (int) floor(max(0, $subtotal - $this->discount) / self::POINT_VALUE);
                 if ($pointsRedeemed > (int) ($customer?->point ?? 0)) {
-                    throw ValidationException::withMessages(['pointsToRedeem' => 'Khách hàng không đủ điểm để sử dụng.']);
+                    throw ValidationException::withMessages(['pointsToRedeem' => 'Khách hàng không đủ điểm.']);
                 }
                 if ($pointsRedeemed > $maxPointsByOrder) {
-                    throw ValidationException::withMessages(['pointsToRedeem' => 'Số điểm dùng vượt quá giá trị còn lại của đơn hàng.']);
+                    throw ValidationException::withMessages(['pointsToRedeem' => 'Giá trị đổi điểm vượt số tiền cần trả.']);
                 }
 
                 $pointsDiscount = $pointsRedeemed * self::POINT_VALUE;
                 $total = round($subtotal - $this->discount - $pointsDiscount, 2);
                 if ($this->paidAmount < $total) {
-                    throw ValidationException::withMessages(['paidAmount' => 'Số tiền khách thanh toán chưa đủ.']);
+                    throw ValidationException::withMessages(['paidAmount' => 'Số tiền thanh toán chưa đủ.']);
                 }
                 $pointsEarned = $customer ? (int) floor($total / 10000) : 0;
 
@@ -403,7 +403,7 @@ class Cashier extends Component
         }
 
         if ($completedOrder->status !== 'completed') {
-            throw ValidationException::withMessages(['cart' => 'Hóa đơn của yêu cầu này đã bị hủy. Vui lòng tải lại quầy để tạo hóa đơn mới.']);
+            throw ValidationException::withMessages(['cart' => 'Hóa đơn đã bị hủy. Tải lại quầy bán hàng để tạo đơn mới.']);
         }
         $this->lastCompletedOrder = $completedOrder;
         $this->showSuccessModal = true;

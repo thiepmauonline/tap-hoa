@@ -26,7 +26,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3 no-print">
         <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
         </a>
         <button type="button" class="btn btn-primary" onclick="window.print()">
             <i class="bi bi-printer me-1"></i> In phiếu
@@ -67,7 +67,7 @@
                 <div class="fw-semibold">{{ $purchaseOrder->purchase_date->format('H:i d/m/Y') }}</div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small mb-1">Người lập phiếu</div>
+                <div class="text-muted small mb-1">Người lập</div>
                 <div class="fw-semibold">{{ $purchaseOrder->user->name ?? 'Không xác định' }}</div>
             </div>
         </div>
@@ -95,7 +95,7 @@
                             <td class="text-end fw-bold">{{ number_format($item->subtotal, 0, ',', '.') }} đ</td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">Phiếu không có sản phẩm.</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">Phiếu nhập trống</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -104,11 +104,11 @@
         <div class="row justify-content-between g-4">
             <div class="col-md-6">
                 <div class="text-muted small mb-1">Ghi chú</div>
-                <div>{{ $purchaseOrder->note ?: 'Không có ghi chú.' }}</div>
+                <div>{{ $purchaseOrder->note ?: 'Không có ghi chú' }}</div>
                 @if($purchaseOrder->status === 'completed')
                     <div class="alert alert-light border mt-3 mb-0 small">
                         <i class="bi bi-shield-check me-1 text-success"></i>
-                        Phiếu đã nhập kho được khóa để bảo toàn lịch sử tồn kho.
+                        Phiếu đã nhập kho không thể chỉnh sửa.
                     </div>
                 @endif
             </div>
@@ -120,7 +120,7 @@
                     <span>Chiết khấu</span><strong>- {{ number_format($purchaseOrder->discount_amount, 0, ',', '.') }} đ</strong>
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom fs-5">
-                    <span>Phải thanh toán</span><strong class="text-danger">{{ number_format($amountAfterDiscount, 0, ',', '.') }} đ</strong>
+                    <span>Cần thanh toán</span><strong class="text-danger">{{ number_format($amountAfterDiscount, 0, ',', '.') }} đ</strong>
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span>Đã thanh toán</span><strong>{{ number_format($purchaseOrder->paid_amount, 0, ',', '.') }} đ</strong>

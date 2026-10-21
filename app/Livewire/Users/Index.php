@@ -79,10 +79,10 @@ class Index extends Component
         if ($this->userId) {
             $user = User::where('store_id', $storeId)->findOrFail($this->userId);
             if ($user->isOwner()) {
-                throw ValidationException::withMessages(['role' => 'Không thể thay đổi vai trò chủ cửa hàng tại đây.']);
+                throw ValidationException::withMessages(['role' => 'Không thể đổi vai trò chủ cửa hàng.']);
             }
             $user->update($data);
-            session()->flash('success', 'Đã cập nhật thông tin nhân viên.');
+            session()->flash('success', 'Đã cập nhật nhân viên.');
         } else {
             User::create($data + ['store_id' => $storeId, 'status' => 1]);
             session()->flash('success', 'Đã tạo tài khoản nhân viên.');
@@ -103,6 +103,6 @@ class Index extends Component
     {
         return view('livewire.users.index', [
             'users' => User::where('store_id', auth()->user()->store_id)->orderByRaw("role = 'owner' desc")->orderBy('name')->get(),
-        ])->layout('layouts.app', ['headerTitle' => 'Quản lý Nhân viên Cửa hàng']);
+        ])->layout('layouts.app', ['headerTitle' => 'Nhân viên']);
     }
 }

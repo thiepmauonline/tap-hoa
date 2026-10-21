@@ -8,10 +8,10 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'reset' => 'Mật khẩu của bạn đã được đặt lại.',
-    'sent' => 'Chúng tôi đã gửi liên kết đặt lại mật khẩu qua email của bạn.',
-    'throttled' => 'Vui lòng chờ trước khi thử lại.',
-    'token' => 'Mã đặt lại mật khẩu này không hợp lệ.',
-    'user' => 'Không tìm thấy người dùng với địa chỉ email này.',
+    'reset' => 'Đã đặt lại mật khẩu.',
+    'sent' => 'Đã gửi liên kết đặt lại mật khẩu qua email.',
+    'throttled' => 'Vui lòng thử lại sau ít phút.',
+    'token' => 'Mã đặt lại mật khẩu không hợp lệ.',
+    'user' => 'Không tìm thấy tài khoản với email này.',
 
 ];

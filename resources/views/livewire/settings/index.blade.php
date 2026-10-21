@@ -7,7 +7,7 @@
             <div class="card-header bg-white fw-bold"><i class="bi bi-shop me-2"></i>Thông tin cửa hàng</div>
             <div class="card-body">
                 @if(auth()->user()->isOwner())
-                    <p class="text-muted small">Thông tin này được hiển thị trên hóa đơn bán hàng.</p>
+                    <p class="text-muted small">Hiển thị trên hóa đơn.</p>
                     <form wire:submit="saveStore">
                         <div class="mb-3">
                             <label for="storeName" class="form-label fw-semibold">Tên cửa hàng</label>
@@ -24,7 +24,7 @@
                             <textarea id="storeAddress" wire:model="storeAddress" class="form-control" rows="3" maxlength="255"></textarea>
                             @error('storeAddress')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                         </div>
-                        <button class="btn btn-primary" type="submit" wire:loading.attr="disabled" wire:target="saveStore">Lưu thông tin cửa hàng</button>
+                        <button class="btn btn-primary" type="submit" wire:loading.attr="disabled" wire:target="saveStore">Lưu</button>
                     </form>
                 @else
                     <dl class="mb-0">
@@ -32,7 +32,7 @@
                         <dt>Số điện thoại</dt><dd>{{ auth()->user()->store->phone ?: 'Chưa cập nhật' }}</dd>
                         <dt>Địa chỉ</dt><dd>{{ auth()->user()->store->address ?: 'Chưa cập nhật' }}</dd>
                     </dl>
-                    <p class="text-muted small mt-3 mb-0">Liên hệ chủ cửa hàng để thay đổi thông tin.</p>
+                    <p class="text-muted small mt-3 mb-0">Liên hệ chủ cửa hàng để chỉnh sửa.</p>
                 @endif
             </div>
         </div>
@@ -51,7 +51,7 @@
                     <div class="mb-3">
                         <label for="newPassword" class="form-label fw-semibold">Mật khẩu mới</label>
                         <input id="newPassword" type="password" wire:model="newPassword" autocomplete="new-password" class="form-control" minlength="8" maxlength="255" required>
-                        <div class="form-text">Ít nhất 8 ký tự và khác mật khẩu hiện tại.</div>
+                        <div class="form-text">Tối thiểu 8 ký tự, khác mật khẩu hiện tại.</div>
                         @error('newPassword')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                     </div>
                     <div class="mb-3">

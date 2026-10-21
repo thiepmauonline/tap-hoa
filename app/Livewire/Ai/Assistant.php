@@ -25,7 +25,7 @@ class Assistant extends Component
         $this->validate();
         $key = 'ai:'.auth()->id();
         if (RateLimiter::tooManyAttempts($key, 10)) {
-            throw ValidationException::withMessages(['userQuestion' => 'Bạn đã gửi nhiều câu hỏi liên tiếp. Vui lòng đợi một phút rồi thử lại.']);
+            throw ValidationException::withMessages(['userQuestion' => 'Quá nhiều câu hỏi. Vui lòng thử lại sau một phút.']);
         }
         RateLimiter::hit($key, 60);
 
@@ -54,7 +54,7 @@ class Assistant extends Component
         abort_unless(auth()->user()->isManager(), 403);
         $storeId = (int) auth()->user()->store_id;
         AiLog::where('store_id', $storeId)->delete();
-        session()->flash('success', 'Đã dọn dẹp lịch sử hỏi đáp AI thành công.');
+        session()->flash('success', 'Đã xóa lịch sử hỏi đáp.');
     }
 
     public function render(AiAssistantService $aiService)
@@ -75,6 +75,6 @@ class Assistant extends Component
             'totalTokens' => $totalTokens,
             'hasGemini' => ! empty(config('services.gemini.key')),
             'hasOpenAi' => ! empty(config('services.openai.key')),
-        ])->layout('layouts.app', ['headerTitle' => 'Trợ lý phân tích']);
+        ])->layout('layouts.app', ['headerTitle' => 'Trợ lý AI']);
     }
 }

@@ -26,6 +26,6 @@ class Show extends Component
     public function render()
     {
         return view('livewire.purchase-orders.show')
-            ->layout('layouts.app', ['headerTitle' => 'Chi tiết Phiếu Nhập Hàng']);
+            ->layout('layouts.app', ['headerTitle' => 'Chi tiết phiếu nhập']);
     }
 }

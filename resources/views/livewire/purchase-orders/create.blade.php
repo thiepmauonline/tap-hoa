@@ -1,34 +1,34 @@
 <div>
     <div class="card card-custom p-4">
-        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cart-plus me-2 text-primary"></i> Tạo Phiếu Nhập Hàng Kho</h5>
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cart-plus me-2 text-primary"></i> Tạo phiếu nhập</h5>
 
         <div class="row g-3 mb-4">
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Chọn Nhà cung cấp</label>
+                <label class="form-label fw-semibold">Nhà cung cấp</label>
                 <select wire:model="supplier_id" class="form-select">
-                    <option value="">-- Chọn Nhà cung cấp --</option>
+                    <option value="">Chọn nhà cung cấp</option>
                     @foreach($suppliers as $sup)
                         <option value="{{ $sup->id }}">{{ $sup->name }} - SĐT: {{ $sup->phone }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Ghi chú phiếu nhập</label>
-                <input type="text" wire:model="note" class="form-control" placeholder="Ghi chú đợt nhập hàng...">
+                <label class="form-label fw-semibold">Ghi chú</label>
+                <input type="text" wire:model="note" class="form-control" placeholder="Ghi chú nhập hàng">
             </div>
         </div>
 
         <!-- Ô chọn sản phẩm đưa vào danh sách nhập -->
         <div class="card bg-light border-0 p-3 mb-4">
-            <label class="form-label fw-semibold">Chọn sản phẩm cần nhập vào kho:</label>
+            <label class="form-label fw-semibold">Sản phẩm nhập:</label>
             <div class="input-group">
                 <select wire:model="selectedProductToAdd" class="form-select form-select-lg">
-                    <option value="">-- Tìm và chọn sản phẩm --</option>
+                    <option value="">Chọn sản phẩm</option>
                     @foreach($products as $p)
-                        <option value="{{ $p->id }}">{{ $p->name }} (Giá nhập cũ: {{ number_format($p->cost_price, 0, ',', '.') }}đ)</option>
+                        <option value="{{ $p->id }}">{{ $p->name }} (Giá vốn: {{ number_format($p->cost_price, 0, ',', '.') }}đ)</option>
                     @endforeach
                 </select>
-                <button wire:click="addProduct" type="button" class="btn btn-primary px-4 fw-bold"><i class="bi bi-plus-circle me-1"></i> Thêm vào danh sách</button>
+                <button wire:click="addProduct" type="button" class="btn btn-primary px-4 fw-bold"><i class="bi bi-plus-circle me-1"></i> Thêm sản phẩm</button>
             </div>
         </div>
 
@@ -39,8 +39,8 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Sản phẩm</th>
-                        <th style="width: 130px;">Số lượng nhập</th>
-                        <th style="width: 180px;">Đơn giá nhập (đ)</th>
+                        <th style="width: 130px;">Số lượng</th>
+                        <th style="width: 180px;">Giá nhập (đ)</th>
                         <th class="text-end">Thành tiền (đ)</th>
                         <th style="width: 50px;"></th>
                     </tr>
@@ -69,14 +69,14 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">Chưa có sản phẩm nào trong danh sách nhập hàng!</td>
+                            <td colspan="5" class="text-center text-muted py-4">Chưa có sản phẩm</td>
                         </tr>
                     @endforelse
                 </tbody>
                 @if(!empty($items))
                     <tfoot>
                         <tr class="table-light">
-                            <td colspan="3" class="text-end fw-bold fs-5">TỔNG TIỀN PHIẾU NHẬP:</td>
+                            <td colspan="3" class="text-end fw-bold fs-5">Tổng tiền:</td>
                             <td class="text-end fw-bold fs-4 text-danger">{{ number_format($totalAmount, 0, ',', '.') }} đ</td>
                             <td></td>
                         </tr>
@@ -86,9 +86,9 @@
         </div>
 
         <div class="d-flex justify-content-between">
-            <a href="{{ route('purchase-orders.index') }}" class="btn btn-secondary px-4">Hủy & Quay lại</a>
+            <a href="{{ route('purchase-orders.index') }}" class="btn btn-secondary px-4">Quay lại</a>
             <button wire:click="save" type="button" class="btn btn-success btn-lg px-5 fw-bold" {{ empty($items) ? 'disabled' : '' }}>
-                <i class="bi bi-box-arrow-in-down me-1"></i> HOÀN TẤT NHẬP KHO
+                <i class="bi bi-box-arrow-in-down me-1"></i> Nhập kho
             </button>
         </div>
     </div>

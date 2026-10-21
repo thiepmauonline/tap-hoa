@@ -55,7 +55,7 @@ class Index extends Component
                 'name' => $this->name,
                 'description' => $this->description,
             ]);
-            session()->flash('success', 'Đã cập nhật danh mục!');
+            session()->flash('success', 'Đã cập nhật danh mục.');
         } else {
             Category::create([
                 'store_id' => $storeId,
@@ -63,7 +63,7 @@ class Index extends Component
                 'description' => $this->description,
                 'status' => 1,
             ]);
-            session()->flash('success', 'Đã thêm danh mục mới!');
+            session()->flash('success', 'Đã thêm danh mục.');
         }
 
         $this->closeModal();
@@ -78,7 +78,7 @@ class Index extends Component
             return;
         }
         $category->delete();
-        session()->flash('success', 'Đã xóa danh mục!');
+        session()->flash('success', 'Đã xóa danh mục.');
     }
 
     public function render()
@@ -89,6 +89,6 @@ class Index extends Component
 
         return view('livewire.categories.index', [
             'categories' => $categories,
-        ])->layout('layouts.app', ['headerTitle' => 'Quản lý Danh mục Sản phẩm']);
+        ])->layout('layouts.app', ['headerTitle' => 'Danh mục']);
     }
 }

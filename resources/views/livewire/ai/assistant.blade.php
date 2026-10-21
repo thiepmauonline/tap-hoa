@@ -11,12 +11,12 @@
                         </div>
                         <div>
                             <div class="fw-semibold text-dark fs-7">Hỏi đáp kinh doanh</div>
-                            <small class="text-success fs-8"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Trực tuyến</small>
+                            <small class="text-success fs-8"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Sẵn sàng</small>
                         </div>
                     </div>
 
                     @if($logs->isNotEmpty())
-                        <button wire:click="clearHistory" wire:confirm="Bạn có chắc chắn muốn xóa toàn bộ lịch sử hỏi đáp không?" class="btn btn-sm btn-link text-muted p-1 text-decoration-none" title="Xóa lịch sử">
+                        <button wire:click="clearHistory" wire:confirm="Xóa lịch sử hỏi đáp của cửa hàng? Không thể hoàn tác." class="btn btn-sm btn-link text-muted p-1 text-decoration-none" title="Xóa lịch sử">
                             <i class="bi bi-trash3 fs-7"></i>
                         </button>
                     @endif
@@ -48,8 +48,8 @@
                     @empty
                         <div class="text-center text-muted my-auto py-4">
                             <i class="bi bi-chat-dots fs-3 text-secondary d-block mb-2"></i>
-                            <div class="fw-semibold text-dark fs-7">Chưa có cuộc trò chuyện nào</div>
-                            <small class="text-muted">Chọn câu hỏi gợi ý ở cột bên phải để tra cứu nhanh số liệu.</small>
+                            <div class="fw-semibold text-dark fs-7">Chưa có cuộc trò chuyện</div>
+                            <small class="text-muted">Nhập câu hỏi hoặc chọn gợi ý để bắt đầu.</small>
                         </div>
                     @endforelse
 
@@ -58,7 +58,7 @@
                         <div class="d-flex justify-content-start">
                             <div class="bg-white border px-3 py-2 rounded-3 text-muted d-flex align-items-center gap-2 fs-8">
                                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-                                <span>Đang tổng hợp dữ liệu...</span>
+                                <span>Đang phân tích...</span>
                             </div>
                         </div>
                     </div>
@@ -69,7 +69,7 @@
                     <form wire:submit.prevent="ask">
                         <div class="input-group">
                             <input type="text" wire:model="userQuestion" class="form-control fs-7" 
-                                   placeholder="Hỏi về bán chạy, tồn kho, doanh thu..."
+                                   placeholder="Hỏi về doanh thu, sản phẩm, tồn kho"
                                    autocomplete="off" autofocus>
                             <button type="submit" class="btn btn-primary px-3 fs-7" wire:loading.attr="disabled">
                                 <span wire:loading.remove wire:target="ask"><i class="bi bi-send-fill me-1"></i>Gửi</span>
@@ -92,29 +92,29 @@
                 </div>
 
                 <div class="list-group list-group-flush p-2">
-                    <button wire:click="selectPrompt('Mặt hàng nào đang bán chạy nhất tháng này?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                    <button wire:click="selectPrompt('Sản phẩm bán chạy trong 30 ngày qua?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
                         <i class="bi bi-graph-up text-primary"></i>
-                        <span>Mặt hàng bán chạy nhất tháng này?</span>
+                        <span>Bán chạy trong 30 ngày</span>
                     </button>
 
-                    <button wire:click="selectPrompt('Sản phẩm nào tồn kho lâu ngày chưa bán được?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                    <button wire:click="selectPrompt('Sản phẩm nào tồn kho lâu?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
                         <i class="bi bi-hourglass text-warning"></i>
-                        <span>Sản phẩm tồn kho lâu chưa bán được?</span>
+                        <span>Hàng tồn lâu</span>
                     </button>
 
-                    <button wire:click="selectPrompt('Có sản phẩm nào sắp hết kho cần nhập thêm không?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                    <button wire:click="selectPrompt('Sản phẩm nào sắp hết hàng?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
                         <i class="bi bi-exclamation-triangle text-danger"></i>
-                        <span>Mặt hàng nào sắp hết cần nhập kho?</span>
+                        <span>Sắp hết hàng</span>
                     </button>
 
-                    <button wire:click="selectPrompt('Báo cáo doanh thu và lợi nhuận 30 ngày qua thế nào?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                    <button wire:click="selectPrompt('Doanh thu và lợi nhuận 30 ngày qua?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
                         <i class="bi bi-cash-stack text-success"></i>
-                        <span>Báo cáo doanh thu & lợi nhuận 30 ngày</span>
+                        <span>Doanh thu và lợi nhuận 30 ngày</span>
                     </button>
 
-                    <button wire:click="selectPrompt('Gợi ý giải pháp giúp cửa hàng tăng doanh thu?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                    <button wire:click="selectPrompt('Gợi ý tăng doanh thu?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
                         <i class="bi bi-lightbulb text-info"></i>
-                        <span>Gợi ý giải pháp tăng doanh thu</span>
+                        <span>Gợi ý tăng doanh thu</span>
                     </button>
                 </div>
 

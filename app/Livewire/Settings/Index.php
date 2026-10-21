@@ -38,9 +38,9 @@ class Index extends Component
             'storeAddress' => 'nullable|string|max:255',
         ], [
             'storeName.required' => 'Vui lòng nhập tên cửa hàng.',
-            'storeName.max' => 'Tên cửa hàng không được quá 255 ký tự.',
-            'storePhone.max' => 'Số điện thoại không được quá 20 ký tự.',
-            'storeAddress.max' => 'Địa chỉ không được quá 255 ký tự.',
+            'storeName.max' => 'Tên cửa hàng tối đa 255 ký tự.',
+            'storePhone.max' => 'Số điện thoại tối đa 20 ký tự.',
+            'storeAddress.max' => 'Địa chỉ tối đa 255 ký tự.',
         ]);
 
         auth()->user()->store->update([
@@ -48,7 +48,7 @@ class Index extends Component
             'phone' => trim($this->storePhone) ?: null,
             'address' => trim($this->storeAddress) ?: null,
         ]);
-        session()->flash('settingsSuccess', 'Đã lưu thông tin cửa hàng và cập nhật thông tin in trên hóa đơn.');
+        session()->flash('settingsSuccess', 'Đã lưu thông tin cửa hàng.');
     }
 
     public function changePassword(): void
@@ -59,10 +59,10 @@ class Index extends Component
             'newPasswordConfirmation' => 'required|same:newPassword',
         ], [
             'currentPassword.required' => 'Vui lòng nhập mật khẩu hiện tại.',
-            'currentPassword.current_password' => 'Mật khẩu hiện tại không chính xác.',
+            'currentPassword.current_password' => 'Mật khẩu hiện tại không đúng.',
             'newPassword.required' => 'Vui lòng nhập mật khẩu mới.',
-            'newPassword.min' => 'Mật khẩu mới phải có ít nhất 8 ký tự.',
-            'newPassword.max' => 'Mật khẩu mới không được quá 255 ký tự.',
+            'newPassword.min' => 'Mật khẩu mới cần ít nhất 8 ký tự.',
+            'newPassword.max' => 'Mật khẩu mới tối đa 255 ký tự.',
             'newPassword.different' => 'Mật khẩu mới phải khác mật khẩu hiện tại.',
             'newPasswordConfirmation.required' => 'Vui lòng xác nhận mật khẩu mới.',
             'newPasswordConfirmation.same' => 'Mật khẩu xác nhận không khớp.',
@@ -75,11 +75,11 @@ class Index extends Component
         session()->regenerate();
         $this->reset('currentPassword', 'newPassword', 'newPasswordConfirmation');
         $this->resetValidation();
-        session()->flash('settingsSuccess', 'Đã đổi mật khẩu thành công.');
+        session()->flash('settingsSuccess', 'Đã đổi mật khẩu.');
     }
 
     public function render()
     {
-        return view('livewire.settings.index')->layout('layouts.app', ['headerTitle' => 'Cài đặt cửa hàng & Tài khoản']);
+        return view('livewire.settings.index')->layout('layouts.app', ['headerTitle' => 'Cài đặt']);
     }
 }

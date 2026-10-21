@@ -77,7 +77,7 @@ class Index extends Component
             }
         });
 
-        session()->flash('success', 'Đã cập nhật số lượng tồn kho!');
+        session()->flash('success', 'Đã cập nhật tồn kho.');
         $this->isModalOpen = false;
     }
 
@@ -109,6 +109,6 @@ class Index extends Component
                 ->latest()
                 ->limit(20)
                 ->get(),
-        ])->layout('layouts.app', ['headerTitle' => 'Quản lý Tồn kho & Cảnh báo']);
+        ])->layout('layouts.app', ['headerTitle' => 'Tồn kho']);
     }
 }

@@ -4,14 +4,14 @@
             <div class="col-md-6">
                 <div class="input-group">
                     <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Tìm sản phẩm kiểm kho...">
+                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Tìm sản phẩm">
                 </div>
             </div>
             <div class="col-md-6 text-end">
                 <div class="form-check form-switch d-inline-block">
                     <input class="form-check-input" type="checkbox" wire:model.live="onlyLowStock" id="lowStockToggle">
                     <label class="form-check-label fw-bold text-danger" for="lowStockToggle">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Chỉ xem sản phẩm sắp hết hàng
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Sắp hết hàng
                     </label>
                 </div>
             </div>
@@ -25,9 +25,9 @@
                     <tr>
                         <th class="ps-3">Sản phẩm</th>
                         <th>Danh mục</th>
-                        <th>Ngưỡng an toàn</th>
+                        <th>Tồn tối thiểu</th>
                         <th>Tồn kho</th>
-                        <th>Ngày nhập gần nhất</th>
+                        <th>Nhập gần nhất</th>
                         <th class="text-end pe-3">Điều chỉnh</th>
                     </tr>
                 </thead>
@@ -39,7 +39,7 @@
                                 <div class="fw-bold text-dark">{{ $p->name ?? 'N/A' }}</div>
                                 <small class="text-muted">Mã vạch: {{ $p->barcode ?? '--' }} | ĐVT: {{ $p->unit ?? '' }}</small>
                             </td>
-                            <td>{{ $p->category->name ?? 'Khác' }}</td>
+                            <td>{{ $p->category->name ?? 'Chưa phân loại' }}</td>
                             <td><span class="badge bg-light text-dark border">{{ $p->min_stock ?? 5 }} {{ $p->unit ?? '' }}</span></td>
                             <td>
                                 @if($inv->quantity <= ($p->min_stock ?? 5))
@@ -54,7 +54,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">Không có dữ liệu tồn kho!</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">Chưa có dữ liệu tồn kho</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -74,14 +74,14 @@
                         <tr>
                             <td class="ps-3 text-nowrap">{{ $movement->created_at->format('H:i d/m/Y') }}</td>
                             <td class="fw-semibold">{{ $movement->product->name ?? 'Sản phẩm đã xóa' }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ ['purchase'=>'Nhập hàng','sale'=>'Bán hàng','sale_cancel'=>'Hoàn kho hủy đơn','adjustment'=>'Điều chỉnh','initial'=>'Khởi tạo'][$movement->type] ?? $movement->type }}</span></td>
+                            <td><span class="badge bg-light text-dark border">{{ ['purchase'=>'Nhập hàng','sale'=>'Bán hàng','sale_cancel'=>'Hoàn kho','adjustment'=>'Điều chỉnh','initial'=>'Khởi tạo'][$movement->type] ?? $movement->type }}</span></td>
                             <td class="text-end fw-bold {{ $movement->quantity_change >= 0 ? 'text-success' : 'text-danger' }}">{{ $movement->quantity_change >= 0 ? '+' : '' }}{{ number_format($movement->quantity_change) }}</td>
                             <td class="text-end">{{ number_format($movement->quantity_before) }} → {{ number_format($movement->quantity_after) }}</td>
                             <td>{{ $movement->user->name ?? 'Hệ thống' }}</td>
                             <td class="pe-3">{{ $movement->note ?: '—' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted py-4">Chưa có biến động kho mới.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">Chưa có biến động kho</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -93,7 +93,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Điều chỉnh Tồn kho thủ công</h5>
+                    <h5 class="modal-title fw-bold">Điều chỉnh tồn kho</h5>
                     <button wire:click="$set('isModalOpen', false)" type="button" class="btn-close"></button>
                 </div>
                 <div class="modal-body">
@@ -102,18 +102,18 @@
                         <h6 class="fw-bold text-primary">{{ $productName }}</h6>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Số lượng thực tế trong kho mới:</label>
+                        <label class="form-label fw-semibold">Số lượng sau điều chỉnh:</label>
                         <input type="number" wire:model="quantity" class="form-control form-control-lg fw-bold text-center">
                         @error('quantity') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Lý do điều chỉnh <span class="text-danger">*</span></label>
-                        <textarea wire:model="adjustmentReason" class="form-control" rows="2" placeholder="Ví dụ: Kiểm kê thực tế, hàng hư hỏng..."></textarea>
+                        <textarea wire:model="adjustmentReason" class="form-control" rows="2" placeholder="VD: Kiểm kê, hàng hư hỏng"></textarea>
                         @error('adjustmentReason') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div class="text-end pt-3 border-top">
                         <button wire:click="$set('isModalOpen', false)" type="button" class="btn btn-secondary me-2">Hủy</button>
-                        <button wire:click="updateQuantity" type="button" class="btn btn-primary px-4">Lưu số lượng mới</button>
+                        <button wire:click="updateQuantity" type="button" class="btn btn-primary px-4">Lưu</button>
                     </div>
                 </div>
             </div>

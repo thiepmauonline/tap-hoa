@@ -76,7 +76,7 @@ class Index extends Component
                 'address' => $this->address,
                 'note' => $this->note,
             ]);
-            session()->flash('success', 'Cập nhật nhà cung cấp thành công!');
+            session()->flash('success', 'Đã cập nhật nhà cung cấp.');
         } else {
             Supplier::create([
                 'store_id' => $storeId,
@@ -86,7 +86,7 @@ class Index extends Component
                 'address' => $this->address,
                 'note' => $this->note,
             ]);
-            session()->flash('success', 'Thêm nhà cung cấp mới thành công!');
+            session()->flash('success', 'Đã thêm nhà cung cấp.');
         }
 
         $this->closeModal();
@@ -101,7 +101,7 @@ class Index extends Component
             return;
         }
         $supplier->delete();
-        session()->flash('success', 'Đã xóa nhà cung cấp!');
+        session()->flash('success', 'Đã xóa nhà cung cấp.');
     }
 
     public function render()
@@ -110,6 +110,6 @@ class Index extends Component
 
         return view('livewire.suppliers.index', [
             'suppliers' => $suppliers,
-        ])->layout('layouts.app', ['headerTitle' => 'Quản lý Nhà cung cấp']);
+        ])->layout('layouts.app', ['headerTitle' => 'Nhà cung cấp']);
     }
 }

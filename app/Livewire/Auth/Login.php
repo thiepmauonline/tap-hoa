@@ -20,8 +20,8 @@ class Login extends Component
     ];
 
     protected array $messages = [
-        'email.required' => 'Vui lòng nhập địa chỉ email.',
-        'email.email' => 'Email không đúng định dạng.',
+        'email.required' => 'Vui lòng nhập email.',
+        'email.email' => 'Email không hợp lệ.',
         'password.required' => 'Vui lòng nhập mật khẩu.',
     ];
 
@@ -30,7 +30,7 @@ class Login extends Component
         $this->validate();
         $key = 'login:'.hash('sha256', mb_strtolower($this->email).'|'.request()->ip());
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            $this->addError('email', 'Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau '.RateLimiter::availableIn($key).' giây.');
+            $this->addError('email', 'Đăng nhập sai quá nhiều lần. Thử lại sau '.RateLimiter::availableIn($key).' giây.');
 
             return;
         }
@@ -41,7 +41,7 @@ class Login extends Component
 
             if (! $user->status || ! $store || ! $store->status || ($store->expired_at && $store->expired_at->isPast())) {
                 Auth::logout();
-                $this->addError('email', 'Tài khoản hoặc cửa hàng đã bị khóa hay hết hạn sử dụng.');
+                $this->addError('email', 'Tài khoản hoặc cửa hàng bị khóa hoặc hết hạn.');
 
                 return;
             }
@@ -53,7 +53,7 @@ class Login extends Component
         }
 
         RateLimiter::hit($key, 60);
-        $this->addError('email', 'Thông tin email hoặc mật khẩu không chính xác.');
+        $this->addError('email', 'Email hoặc mật khẩu không đúng.');
     }
 
     public function render()

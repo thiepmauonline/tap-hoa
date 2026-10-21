@@ -89,7 +89,7 @@ class Create extends Component
     public function save()
     {
         if (empty($this->items)) {
-            session()->flash('error', 'Chưa có sản phẩm nào trong phiếu nhập!');
+            session()->flash('error', 'Phiếu nhập chưa có sản phẩm.');
 
             return;
         }
@@ -119,7 +119,7 @@ class Create extends Component
                     $costPrice = filter_var($item['cost_price'] ?? null, FILTER_VALIDATE_FLOAT);
 
                     if (! $product || $quantity === false || $quantity < 1 || $quantity > 2147483647 || $costPrice === false || ! is_finite($costPrice) || $costPrice < 0 || $costPrice > 9999999999999.99) {
-                        throw ValidationException::withMessages(['items' => 'Danh sách sản phẩm nhập có dữ liệu không hợp lệ.']);
+                        throw ValidationException::withMessages(['items' => 'Sản phẩm nhập không hợp lệ.']);
                     }
 
                     $costPrice = round($costPrice, 2);
@@ -133,7 +133,7 @@ class Create extends Component
 
                 $totalAmount = array_sum(array_column($preparedItems, 'subtotal'));
                 if ($totalAmount > 9999999999999.99) {
-                    throw ValidationException::withMessages(['items' => 'Giá trị phiếu nhập vượt quá giới hạn cho phép.']);
+                    throw ValidationException::withMessages(['items' => 'Tổng tiền phiếu nhập vượt giới hạn.']);
                 }
                 $purchaseOrder = PurchaseOrder::create([
                     'store_id' => $storeId,
@@ -180,7 +180,7 @@ class Create extends Component
             }
         }
 
-        session()->flash('success', 'Đã nhập kho thành công!');
+        session()->flash('success', 'Đã nhập kho.');
 
         return redirect()->route('purchase-orders.index');
     }
@@ -193,6 +193,6 @@ class Create extends Component
             'suppliers' => Supplier::where('store_id', $storeId)->orderBy('name')->get(),
             'products' => Product::where('store_id', $storeId)->where('status', 1)->orderBy('name')->get(),
             'totalAmount' => array_sum(array_column($this->items, 'subtotal')),
-        ])->layout('layouts.app', ['headerTitle' => 'Tạo Phiếu Nhập Hàng Mới']);
+        ])->layout('layouts.app', ['headerTitle' => 'Tạo phiếu nhập']);
     }
 }

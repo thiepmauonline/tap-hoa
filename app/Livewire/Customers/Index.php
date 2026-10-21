@@ -64,7 +64,7 @@ class Index extends Component
                 'phone' => $this->phone,
                 'address' => $this->address,
             ]);
-            session()->flash('success', 'Đã cập nhật thông tin khách hàng!');
+            session()->flash('success', 'Đã cập nhật khách hàng.');
         } else {
             Customer::create([
                 'store_id' => $storeId,
@@ -73,7 +73,7 @@ class Index extends Component
                 'address' => $this->address,
                 'point' => 0,
             ]);
-            session()->flash('success', 'Thêm khách hàng mới thành công!');
+            session()->flash('success', 'Đã thêm khách hàng.');
         }
 
         $this->closeModal();
@@ -88,7 +88,7 @@ class Index extends Component
             return;
         }
         $customer->delete();
-        session()->flash('success', 'Đã xóa khách hàng!');
+        session()->flash('success', 'Đã xóa khách hàng.');
     }
 
     public function render()
@@ -99,6 +99,6 @@ class Index extends Component
 
         return view('livewire.customers.index', [
             'customers' => $customers,
-        ])->layout('layouts.app', ['headerTitle' => 'Quản lý Khách hàng']);
+        ])->layout('layouts.app', ['headerTitle' => 'Khách hàng']);
     }
 }

@@ -32,16 +32,16 @@ class Business extends Component
             'dateFrom.date_format' => 'Ngày bắt đầu không hợp lệ.',
             'dateTo.required' => 'Vui lòng chọn ngày kết thúc.',
             'dateTo.date_format' => 'Ngày kết thúc không hợp lệ.',
-            'dateTo.after_or_equal' => 'Ngày kết thúc phải từ ngày bắt đầu trở đi.',
+            'dateTo.after_or_equal' => 'Ngày kết thúc không được trước ngày bắt đầu.',
             'slowStockDays.required' => 'Vui lòng nhập ngưỡng tồn lâu.',
             'slowStockDays.integer' => 'Ngưỡng tồn lâu phải là số nguyên.',
             'slowStockDays.min' => 'Ngưỡng tồn lâu phải từ 7 ngày.',
-            'slowStockDays.max' => 'Ngưỡng tồn lâu không được quá 3650 ngày.',
+            'slowStockDays.max' => 'Ngưỡng tồn lâu tối đa 3650 ngày.',
         ]);
         if ($validator->fails()) {
             $this->setErrorBag($validator->errors());
 
-            return view('livewire.reports.business')->layout('layouts.app', ['headerTitle' => 'Báo cáo Kinh doanh']);
+            return view('livewire.reports.business')->layout('layouts.app', ['headerTitle' => 'Báo cáo kinh doanh']);
         }
         $this->resetValidation();
 
@@ -57,6 +57,6 @@ class Business extends Component
 
         return view('livewire.reports.business', compact(
             'summary', 'dailyRevenue', 'topProducts', 'slowStockProducts'
-        ))->layout('layouts.app', ['headerTitle' => 'Báo cáo Kinh doanh']);
+        ))->layout('layouts.app', ['headerTitle' => 'Báo cáo kinh doanh']);
     }
 }

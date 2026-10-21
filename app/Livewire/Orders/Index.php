@@ -64,7 +64,7 @@ class Index extends Component
         $this->viewOrderId = $this->selectedOrder->id;
         $this->reset('cancellationReason');
         $this->resetValidation();
-        session()->flash('success', 'Đã hủy hóa đơn, hoàn tồn kho và đảo điểm thưởng.');
+        session()->flash('success', 'Đã hủy hóa đơn, hoàn kho, hoàn điểm đã dùng và thu hồi điểm đã tích.');
     }
 
     public function render()
@@ -96,6 +96,6 @@ class Index extends Component
 
         return view('livewire.orders.index', [
             'orders' => $orders,
-        ])->layout('layouts.app', ['headerTitle' => 'Lịch sử Đơn bán hàng POS']);
+        ])->layout('layouts.app', ['headerTitle' => 'Hóa đơn']);
     }
 }

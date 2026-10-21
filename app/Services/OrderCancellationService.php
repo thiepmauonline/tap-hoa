@@ -21,8 +21,8 @@ class OrderCancellationService
             'cancellationReason' => 'required|string|min:3|max:255',
         ], [
             'cancellationReason.required' => 'Vui lòng nhập lý do hủy hóa đơn.',
-            'cancellationReason.min' => 'Lý do hủy phải có ít nhất 3 ký tự.',
-            'cancellationReason.max' => 'Lý do hủy không được quá 255 ký tự.',
+            'cancellationReason.min' => 'Lý do hủy cần ít nhất 3 ký tự.',
+            'cancellationReason.max' => 'Lý do hủy tối đa 255 ký tự.',
         ])->validate();
 
         return DB::transaction(function () use ($orderId, $user, $reason) {
@@ -31,7 +31,7 @@ class OrderCancellationService
 
             if ($order->status !== 'completed') {
                 throw ValidationException::withMessages([
-                    'cancellationReason' => 'Chỉ có thể hủy hóa đơn hoàn tất và chưa từng hủy.',
+                    'cancellationReason' => 'Chỉ hủy được hóa đơn đang ở trạng thái hoàn tất.',
                 ]);
             }
 
@@ -42,7 +42,7 @@ class OrderCancellationService
 
                 if (! $customer || (int) $customer->point + $order->points_redeemed < $order->points_earned) {
                     throw ValidationException::withMessages([
-                        'cancellationReason' => 'Không thể hủy vì không đủ điểm để thu hồi điểm đã tích. Hãy xử lý các hóa đơn đã dùng số điểm này trước.',
+                        'cancellationReason' => 'Không đủ điểm để thu hồi. Cần hủy các hóa đơn đã dùng điểm này trước.',
                     ]);
                 }
             }
