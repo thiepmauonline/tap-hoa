@@ -35,7 +35,7 @@ class Assistant extends Component
         $storeId = (int) auth()->user()->store_id;
         $userId = (int) auth()->id();
 
-        // Xử lý thông qua AiAssistantService (Gemini API -> OpenAI -> Local Fallback)
+        // Gemini -> OpenAI -> ngoại tuyến; AI tự gọi công cụ truy vấn dữ liệu của cửa hàng
         try {
             $aiService->ask($question, $storeId, $userId);
             $this->userQuestion = '';
@@ -73,8 +73,8 @@ class Assistant extends Component
         return view('livewire.ai.assistant', [
             'logs' => $logs,
             'totalTokens' => $totalTokens,
-            'hasGemini' => ! empty(config('services.gemini.key')),
-            'hasOpenAi' => ! empty(config('services.openai.key')),
+            'aiMode' => ! empty(config('services.gemini.key')) ? 'Google Gemini'
+                : (! empty(config('services.openai.key')) ? 'OpenAI' : null),
         ])->layout('layouts.app', ['headerTitle' => 'Trợ lý AI']);
     }
 }

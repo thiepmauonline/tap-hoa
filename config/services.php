@@ -37,7 +37,9 @@ return [
 
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
-        'model' => env('GEMINI_MODEL', 'gemini-3.1-flash-lite'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),
+        // Used when the main model is overloaded or unavailable.
+        'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-3.1-flash-lite'),
     ],
 
     'openai' => [

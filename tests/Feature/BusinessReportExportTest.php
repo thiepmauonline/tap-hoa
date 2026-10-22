@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\Pos\Cashier;
 use App\Livewire\Reports\Business;
 use App\Models\OrderItem;
-use App\Services\AiAssistantService;
+use App\Services\Ai\StoreDataTools;
 use App\Services\BusinessReportService;
 use App\Services\OrderCancellationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,9 +61,9 @@ class BusinessReportExportTest extends TestCase
         $this->assertEquals(2000, $summary->gross_profit);
         $this->assertEquals(1, $summary->order_count);
         Livewire::test(Business::class)->assertSee('16.000')->assertSee('2.000')->assertSee('CSV doanh thu');
-        $context = app(AiAssistantService::class)->buildStoreContext($user->store_id);
-        $this->assertEquals(16000, $context['revenue_30_days']);
-        $this->assertEquals(2000, $context['gross_profit_30_days']);
+        $aiRevenue = app(StoreDataTools::class)->call('doanh_thu', ['tu_ngay' => now()->subDays(29)->toDateString(), 'den_ngay' => now()->toDateString()], $user->store_id);
+        $this->assertSame('16.000 đ', $aiRevenue['doanh_thu']);
+        $this->assertSame('2.000 đ', $aiRevenue['loi_nhuan_gop']);
 
         $csv = $this->get($this->exportUrl('revenue'))->assertOk()
             ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')->streamedContent();

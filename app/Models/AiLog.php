@@ -17,10 +17,14 @@ class AiLog extends Model
         'answer',
         'type',
         'tokens_used',
+        'provider',
+        'model',
+        'tools_used',
     ];
 
     protected $casts = [
         'tokens_used' => 'integer',
+        'tools_used' => 'array',
     ];
 
     public function store(): BelongsTo

@@ -300,12 +300,11 @@ class DatabaseSeeder extends Seeder
 
         // Sample answers are generated from the same real data, without calling an external API.
         $ai = app(AiAssistantService::class);
-        $context = $ai->buildStoreContext($store1->id);
         foreach ([['Mặt hàng nào bán chạy trong 30 ngày qua?', 'analysis'], ['Có sản phẩm nào sắp hết kho?', 'restock']] as [$question, $type]) {
             AiLog::create([
                 'store_id' => $store1->id, 'user_id' => $owner1->id, 'question' => $question,
-                'answer' => $ai->generateLocalAnalysis($question, $store1->id, $context),
-                'type' => $type, 'tokens_used' => 0,
+                'answer' => $ai->offlineAnswer($question, $store1->id),
+                'type' => $type, 'tokens_used' => 0, 'provider' => 'local',
             ]);
         }
 

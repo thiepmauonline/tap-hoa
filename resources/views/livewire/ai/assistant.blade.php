@@ -11,7 +11,11 @@
                         </div>
                         <div>
                             <div class="fw-semibold text-dark fs-7">Hỏi đáp kinh doanh</div>
-                            <small class="text-success fs-8"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Sẵn sàng</small>
+                            @if($aiMode)
+                                <small class="text-success fs-8"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>{{ $aiMode }} · sẵn sàng</small>
+                            @else
+                                <small class="text-warning fs-8"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Chế độ ngoại tuyến (chưa cấu hình API AI)</small>
+                            @endif
                         </div>
                     </div>
 
@@ -40,7 +44,17 @@
                                     {!! \Illuminate\Support\Str::markdown($log->answer, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
                                 </div>
                                 <div class="text-muted fs-8 mt-1.5 pt-1 border-top d-flex justify-content-between align-items-center">
-                                    <span class="text-secondary">Trợ lý</span>
+                                    <span class="text-secondary">
+                                        Trợ lý
+                                        @if($log->provider === 'local')
+                                            · <span class="badge badge-soft-warning fw-normal" title="Không kết nối được dịch vụ AI, câu trả lời theo mẫu có sẵn">Ngoại tuyến</span>
+                                        @elseif($log->provider)
+                                            · <span title="{{ $log->model }}">{{ \App\Services\AiAssistantService::providerLabel($log->provider) }}</span>
+                                        @endif
+                                        @if(! empty($log->tools_used))
+                                            <span class="ms-1" title="Dữ liệu đã tra cứu"><i class="bi bi-database"></i> {{ collect($log->tools_used)->map(fn ($tool) => \App\Services\Ai\StoreDataTools::LABELS[$tool] ?? $tool)->implode(', ') }}</span>
+                                        @endif
+                                    </span>
                                     <span>{{ $log->created_at->format('H:i d/m') }}</span>
                                 </div>
                             </div>
@@ -92,9 +106,24 @@
                 </div>
 
                 <div class="list-group list-group-flush p-2">
+                    <button wire:click="selectPrompt('Doanh thu hôm qua bao nhiêu?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                        <i class="bi bi-cash-stack text-success"></i>
+                        <span>Doanh thu hôm qua</span>
+                    </button>
+
+                    <button wire:click="selectPrompt('So sánh doanh thu tuần này với tuần trước')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                        <i class="bi bi-bar-chart-line text-primary"></i>
+                        <span>So sánh tuần này và tuần trước</span>
+                    </button>
+
                     <button wire:click="selectPrompt('Sản phẩm bán chạy trong 30 ngày qua?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
                         <i class="bi bi-graph-up text-primary"></i>
                         <span>Bán chạy trong 30 ngày</span>
+                    </button>
+
+                    <button wire:click="selectPrompt('Nên nhập thêm hàng gì, bao nhiêu?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                        <i class="bi bi-box-seam text-danger"></i>
+                        <span>Gợi ý nhập hàng</span>
                     </button>
 
                     <button wire:click="selectPrompt('Sản phẩm nào tồn kho lâu?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
@@ -102,25 +131,21 @@
                         <span>Hàng tồn lâu</span>
                     </button>
 
-                    <button wire:click="selectPrompt('Sản phẩm nào sắp hết hàng?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
-                        <i class="bi bi-exclamation-triangle text-danger"></i>
-                        <span>Sắp hết hàng</span>
+                    <button wire:click="selectPrompt('Khách hàng nào mua nhiều nhất?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                        <i class="bi bi-people text-info"></i>
+                        <span>Khách mua nhiều nhất</span>
                     </button>
 
-                    <button wire:click="selectPrompt('Doanh thu và lợi nhuận 30 ngày qua?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
-                        <i class="bi bi-cash-stack text-success"></i>
-                        <span>Doanh thu và lợi nhuận 30 ngày</span>
-                    </button>
-
-                    <button wire:click="selectPrompt('Gợi ý tăng doanh thu?')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
+                    <button wire:click="selectPrompt('Gợi ý tăng doanh thu cho cửa hàng')" class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 fs-8 text-secondary d-flex align-items-center gap-2">
                         <i class="bi bi-lightbulb text-info"></i>
                         <span>Gợi ý tăng doanh thu</span>
                     </button>
+                    <div class="px-2 pt-2 text-muted fs-8">Có thể hỏi tự do, ví dụ: "Pepsi còn bao nhiêu lon?", "Doanh thu tháng 9?"</div>
                 </div>
 
                 <div class="card-footer bg-light border-top py-2 px-3 text-muted fs-8 d-flex justify-content-between align-items-center">
                     <span>Đã hỏi: {{ $logs->count() }} câu</span>
-                    <span>Số liệu thực tế</span>
+                    <span>Số liệu lấy trực tiếp từ hệ thống</span>
                 </div>
             </div>
         </div>

@@ -6,11 +6,13 @@ use App\Livewire\Ai\Assistant;
 use App\Models\AiLog;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\Ai\StoreDataTools;
 use App\Services\AiAssistantService;
 use App\Services\BusinessReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Livewire\Livewire;
 use Tests\Concerns\CreatesStoreData;
 use Tests\TestCase;
@@ -50,25 +52,29 @@ class AiSafetyRegressionTest extends TestCase
                 'order_date' => now()->subDays($days)->startOfDay(), 'status' => 'completed', 'subtotal_amount' => $amount, 'total_amount' => $amount]);
             OrderItem::create(['order_id' => $order->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => $amount, 'cost_price' => 0, 'subtotal' => $amount]);
         }
-        $data = app(AiAssistantService::class)->buildStoreContext($user->store_id);
-        $this->assertEquals(30000, $data['last_7_days_revenue']);
-        $this->assertEquals(100, $data['growth_rate_7_days']);
-        $this->assertEquals(48000, $data['revenue_30_days']);
-        $this->assertEquals(48000, $data['top_products']->first()->total_sales);
+        $tools = app(StoreDataTools::class);
+        $revenue = fn (string $from, string $to) => $tools->call('doanh_thu', ['tu_ngay' => $from, 'den_ngay' => $to], $user->store_id)['doanh_thu'];
+        $this->assertSame('30.000 đ', $revenue('2026-10-10', '2026-10-16'));
+        $this->assertSame('15.000 đ', $revenue('2026-10-03', '2026-10-09'));
+        $this->assertSame('48.000 đ', $revenue('2026-09-17', '2026-10-16'));
+        $this->assertSame('10.000 đ', $revenue('2026-10-16', '2026-10-16'));
+        $top = $tools->call('san_pham_ban_chay', ['tu_ngay' => '2026-09-17', 'den_ngay' => '2026-10-16'], $user->store_id);
+        $this->assertSame('48.000 đ', $top['san_pham'][0]['doanh_thu']);
     }
 
     public function test_newly_stocked_products_are_not_classified_as_slow_stock(): void
     {
         $user = $this->storeUser();
         $new = $this->stockProduct($user);
-        $old = $this->stockProduct($user, ['barcode' => 'OLD', 'created_at' => now()->subDays(70)]);
-        $restocked = $this->stockProduct($user, ['barcode' => 'RESTOCKED', 'created_at' => now()->subDays(70)]);
+        $old = $this->stockProduct($user, ['name' => 'Hàng cũ', 'barcode' => 'OLD', 'created_at' => now()->subDays(70)]);
+        $restocked = $this->stockProduct($user, ['name' => 'Hàng mới nhập lại', 'barcode' => 'RESTOCKED', 'created_at' => now()->subDays(70)]);
         $old->forceFill(['created_at' => now()->subDays(70)])->save();
         $restocked->forceFill(['created_at' => now()->subDays(70)])->save();
         $restocked->inventory()->update(['last_imported_at' => now()->subDay()]);
         $result = app(BusinessReportService::class)->slowStock($user->store_id, 45);
         $this->assertSame([$old->id], $result->pluck('id')->all());
-        $this->assertSame([$old->id], app(AiAssistantService::class)->buildStoreContext($user->store_id)['slow_stock_products']->pluck('id')->all());
+        $aiResult = app(StoreDataTools::class)->call('hang_ton_lau', ['so_ngay' => 45], $user->store_id);
+        $this->assertSame(['Hàng cũ'], array_column($aiResult['san_pham'], 'ten'));
     }
 
     public function test_provider_response_and_usage_are_parsed_without_estimated_random_tokens(): void
@@ -92,6 +98,7 @@ class AiSafetyRegressionTest extends TestCase
         $product = $this->stockProduct($user);
         $product->inventory()->update(['quantity' => 1]);
         config(['services.gemini.key' => 'test-key', 'services.openai.key' => 'test-key']);
+        Sleep::fake();
         Http::preventStrayRequests();
         Http::fake([
             'generativelanguage.googleapis.com/*' => fn () => throw new ConnectionException('Simulated connection failure'),
@@ -101,7 +108,9 @@ class AiSafetyRegressionTest extends TestCase
         $this->assertStringContainsString('Sữa tươi', $result['answer']);
         $this->assertSame(0, $result['tokens_used']);
         $this->assertDatabaseHas('ai_logs', ['store_id' => $user->store_id, 'type' => 'restock', 'tokens_used' => 0]);
-        Http::assertSentCount(1); // A failed connection never produces a recorded response.
+        // A failed connection is not recorded; the temporary 503 is retried once before falling back.
+        Http::assertSentCount(2);
+        $this->assertSame('local', $result['provider_key']);
     }
 
     public function test_business_advice_is_not_mistaken_for_a_revenue_question_or_greeting(): void

@@ -48,7 +48,7 @@ class BusinessReportService
             ->orderBy('sale_date')->get();
     }
 
-    public function topProducts(int $storeId, CarbonInterface $from, CarbonInterface $to): Collection
+    public function topProducts(int $storeId, CarbonInterface $from, CarbonInterface $to, string $sort = 'quantity', int $limit = 10): Collection
     {
         return OrderItem::query()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
@@ -61,7 +61,7 @@ class BusinessReportService
                 SUM(order_items.quantity) as quantity_sold,
                 SUM(CASE WHEN orders.subtotal_amount > 0
                     THEN 1.0 * order_items.subtotal * orders.total_amount / orders.subtotal_amount ELSE 0 END) as revenue')
-            ->orderByDesc('quantity_sold')->orderBy('order_items.product_id')->limit(10)->get();
+            ->orderByDesc($sort === 'revenue' ? 'revenue' : 'quantity_sold')->orderBy('order_items.product_id')->limit($limit)->get();
     }
 
     public function slowStock(int $storeId, int $days, int $limit = 20): Collection
