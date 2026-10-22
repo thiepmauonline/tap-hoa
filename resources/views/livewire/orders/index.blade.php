@@ -59,7 +59,7 @@
                                 @endif
                             </td>
                             <td class="fw-bold text-dark">{{ number_format($ord->total_amount, 0, ',', '.') }} đ</td>
-                            <td><span class="badge {{ $ord->status === 'cancelled' ? 'bg-danger' : 'bg-success' }}">{{ $ord->status === 'cancelled' ? 'Đã hủy' : 'Hoàn tất' }}</span></td>
+                            <td><span class="badge {{ $ord->status === 'cancelled' ? 'badge-soft-danger' : 'badge-soft-success' }}">{{ $ord->status === 'cancelled' ? 'Đã hủy' : 'Hoàn tất' }}</span></td>
                             <td class="text-end pe-3">
                                 <button wire:click="showDetail({{ $ord->id }})" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem</button>
                             </td>

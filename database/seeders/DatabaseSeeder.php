@@ -16,6 +16,7 @@ use App\Models\Store;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\AiAssistantService;
+use App\Services\DocumentCodeGenerator;
 use App\Services\InventoryService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -32,11 +33,11 @@ class DatabaseSeeder extends Seeder
     private function seedStores(): void
     {
         // -------------------------------------------------------------------------
-        // 1. TẠO CỬA HÀNG 1: TẠP HÓA HẠNH PHÚC (Cửa hàng chính)
+        // 1. TẠO CỬA HÀNG 1: TẠP HÓA HUY HOÀNG (Cửa hàng chính)
         // -------------------------------------------------------------------------
         $store1 = Store::create([
-            'name' => 'Tạp Hóa Hạnh Phúc',
-            'code' => 'tap-hoa-hanh-phuc',
+            'name' => 'Cửa hàng Huy Hoàng',
+            'code' => 'cua-hang-huy-hoang',
             'phone' => '0987654321',
             'address' => '123 Đường Nguyễn Trãi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
             'status' => 1,
@@ -46,10 +47,10 @@ class DatabaseSeeder extends Seeder
         // Tài khoản Cửa hàng 1
         $owner1 = User::create([
             'store_id' => $store1->id,
-            'name' => 'Nguyễn Văn Hạnh',
-            'email' => 'admin@taphoa.com',
+            'name' => 'Trần Huy Hoàng',
+            'email' => 'tranhuyhoang@gmail.com',
             'phone' => '0987654321',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('Hoang@2026'),
             'role' => 'owner',
             'status' => 1,
         ]);
@@ -108,7 +109,7 @@ class DatabaseSeeder extends Seeder
                 'cost_price' => 8500,
                 'sale_price' => 11000,
                 'min_stock' => 24,
-                'image' => null,
+                'image' => 'images/products/pepsi.svg',
                 'qty' => 120,
             ],
             [
@@ -144,7 +145,7 @@ class DatabaseSeeder extends Seeder
                 'cost_price' => 5000,
                 'sale_price' => 7000,
                 'min_stock' => 20,
-                'image' => null,
+                'image' => 'images/products/oishi_tom_cay.svg',
                 'qty' => 8,
             ],
             [
@@ -168,7 +169,7 @@ class DatabaseSeeder extends Seeder
                 'cost_price' => 28000,
                 'sale_price' => 36000,
                 'min_stock' => 15,
-                'image' => null,
+                'image' => 'images/products/vinamilk_1l.svg',
                 'qty' => 45,
             ],
             [
@@ -180,7 +181,7 @@ class DatabaseSeeder extends Seeder
                 'cost_price' => 42000,
                 'sale_price' => 52000,
                 'min_stock' => 10,
-                'image' => null,
+                'image' => 'images/products/tuong_an.svg',
                 'qty' => 30,
             ],
             [
@@ -192,7 +193,7 @@ class DatabaseSeeder extends Seeder
                 'cost_price' => 48000,
                 'sale_price' => 60000,
                 'min_stock' => 10,
-                'image' => null,
+                'image' => 'images/products/omo.svg',
                 'qty' => 25,
             ],
             [
@@ -204,7 +205,7 @@ class DatabaseSeeder extends Seeder
                 'cost_price' => 110000,
                 'sale_price' => 135000,
                 'min_stock' => 5,
-                'image' => null,
+                'image' => 'images/products/sunsilk.svg',
                 'qty' => 12,
             ],
         ];
@@ -229,7 +230,7 @@ class DatabaseSeeder extends Seeder
         // 8. Tạo Phiếu Nhập Hàng Mẫu
         $po1 = PurchaseOrder::create([
             'store_id' => $store1->id,
-            'po_code' => 'PN-'.Carbon::now()->subDays(8)->format('Ymd').'-0001',
+            'po_code' => app(DocumentCodeGenerator::class)->nextPurchaseCode($store1->id, Carbon::now()->subDays(8)),
             'supplier_id' => $supCoca->id,
             'user_id' => $owner1->id,
             'purchase_date' => Carbon::now()->subDays(8),
@@ -264,7 +265,7 @@ class DatabaseSeeder extends Seeder
             $earned = (int) floor($amount / 10000);
             $order = Order::create([
                 'store_id' => $store1->id,
-                'order_code' => 'HD-'.$orderDate->format('Ymd').'-DEMO',
+                'order_code' => app(DocumentCodeGenerator::class)->nextOrderCode($store1->id, $orderDate),
                 'customer_id' => $customer->id,
                 'user_id' => $staff1->id,
                 'order_date' => $orderDate,
@@ -294,6 +295,8 @@ class DatabaseSeeder extends Seeder
                 'points_before' => $before, 'points_after' => $before + $earned, 'note' => 'Tích điểm từ hóa đơn mẫu',
             ]);
         }
+
+        $this->call(StoreOneDemoProductsSeeder::class);
 
         // Sample answers are generated from the same real data, without calling an external API.
         $ai = app(AiAssistantService::class);

@@ -23,8 +23,8 @@
                             <td class="ps-3 fw-bold text-dark">{{ $c->name }}</td>
                             <td><span class="badge bg-light text-dark border"><i class="bi bi-telephone me-1"></i>{{ $c->phone ?? '--' }}</span></td>
                             <td class="text-muted">{{ $c->address ?? '--' }}</td>
-                            <td><span class="badge bg-info fs-7">{{ $c->orders_count }} đơn</span></td>
-                            <td><span class="badge bg-warning text-dark fs-6 px-3 py-1 fw-bold"><i class="bi bi-star-fill me-1"></i> {{ $c->point }} điểm</span></td>
+                            <td><span class="badge badge-soft-info fs-7">{{ $c->orders_count }} đơn</span></td>
+                            <td><span class="badge badge-soft-warning fs-6 px-3 py-1 fw-bold"><i class="bi bi-star-fill me-1"></i> {{ $c->point }} điểm</span></td>
                             <td class="text-end pe-3">
                                 <button wire:click="edit({{ $c->id }})" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Sửa</button>
                                 <button onclick="confirm('Xóa khách hàng này?') || event.stopImmediatePropagation()" wire:click="delete({{ $c->id }})" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Xóa</button>

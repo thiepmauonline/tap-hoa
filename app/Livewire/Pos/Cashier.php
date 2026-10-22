@@ -7,6 +7,7 @@ use App\Models\CustomerPointTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Services\DocumentCodeGenerator;
 use App\Services\InventoryService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -47,12 +48,12 @@ class Cashier extends Component
     public ?Order $lastCompletedOrder = null;
 
     #[Locked]
-    public string $checkoutCode;
+    public string $requestToken;
 
     public function mount(): void
     {
         $this->cart = [];
-        $this->checkoutCode = 'HD-'.now()->format('Ymd').'-'.Str::upper(Str::random(12));
+        $this->requestToken = Str::random(32);
     }
 
     public function scanBarcode(): void
@@ -157,7 +158,7 @@ class Cashier extends Component
         $this->usePoints = false;
         $this->pointsToRedeem = 0;
         $this->note = '';
-        $this->checkoutCode = 'HD-'.now()->format('Ymd').'-'.Str::upper(Str::random(12));
+        $this->requestToken = Str::random(32);
         $this->resetValidation();
     }
 
@@ -245,160 +246,20 @@ class Cashier extends Component
         $this->paidAmount = round((float) $this->paidAmount, 2);
 
         $storeId = (int) auth()->user()->store_id;
-        try {
-            $completedOrder = DB::transaction(function () use ($storeId) {
-                $existing = Order::where('store_id', $storeId)->where('user_id', auth()->id())
-                    ->where('order_code', $this->checkoutCode)->first();
-                if ($existing) {
-                    return $existing->load(['items.product', 'customer', 'user']);
+        // The short code is numbered per day, so retry if another checkout takes the same number.
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                $completedOrder = $this->createOrder($storeId);
+                break;
+            } catch (UniqueConstraintViolationException $exception) {
+                $completedOrder = Order::where('store_id', $storeId)->where('user_id', auth()->id())
+                    ->where('request_token', $this->requestToken)->with(['items.product', 'customer', 'user'])->first();
+                if ($completedOrder) {
+                    break;
                 }
-                $productIds = collect($this->cart)->pluck('id')->map(fn ($id) => (int) $id)->unique();
-                $products = Product::where('store_id', $storeId)
-                    ->where('status', 1)
-                    ->whereIn('id', $productIds)
-                    ->get()
-                    ->keyBy('id');
-                $items = [];
-
-                foreach ($this->cart as $cartItem) {
-                    $product = $products->get((int) ($cartItem['id'] ?? 0));
-                    $quantity = filter_var($cartItem['qty'] ?? null, FILTER_VALIDATE_INT);
-                    if (! $product || $quantity === false || $quantity < 1 || $quantity > 2147483647) {
-                        throw ValidationException::withMessages(['cart' => 'Sản phẩm trong giỏ không hợp lệ.']);
-                    }
-                    $items[] = [
-                        'product' => $product,
-                        'quantity' => $quantity,
-                        'price' => (float) $product->sale_price,
-                        'cost_price' => (float) $product->cost_price,
-                        'subtotal' => round($quantity * (float) $product->sale_price, 2),
-                    ];
+                if ($attempt >= 3) {
+                    throw $exception;
                 }
-
-                $subtotal = array_sum(array_column($items, 'subtotal'));
-                if ($subtotal > 9999999999999.99) {
-                    throw ValidationException::withMessages(['cart' => 'Tổng tiền hóa đơn vượt giới hạn.']);
-                }
-                if ($this->discount > $subtotal) {
-                    throw ValidationException::withMessages(['discount' => 'Giảm giá vượt tổng tiền hàng.']);
-                }
-
-                $customer = null;
-                if ($this->selectedCustomerId) {
-                    $customer = Customer::where('store_id', $storeId)
-                        ->whereKey($this->selectedCustomerId)
-                        ->lockForUpdate()
-                        ->first();
-                    if (! $customer) {
-                        throw ValidationException::withMessages(['selectedCustomerId' => 'Khách hàng không hợp lệ.']);
-                    }
-                }
-
-                if ($this->usePoints && ! $customer) {
-                    throw ValidationException::withMessages(['usePoints' => 'Chọn khách hàng để dùng điểm.']);
-                }
-
-                $pointsRedeemed = $this->usePoints ? $this->pointsToRedeem : 0;
-                $maxPointsByOrder = (int) floor(max(0, $subtotal - $this->discount) / self::POINT_VALUE);
-                if ($pointsRedeemed > (int) ($customer?->point ?? 0)) {
-                    throw ValidationException::withMessages(['pointsToRedeem' => 'Khách hàng không đủ điểm.']);
-                }
-                if ($pointsRedeemed > $maxPointsByOrder) {
-                    throw ValidationException::withMessages(['pointsToRedeem' => 'Giá trị đổi điểm vượt số tiền cần trả.']);
-                }
-
-                $pointsDiscount = $pointsRedeemed * self::POINT_VALUE;
-                $total = round($subtotal - $this->discount - $pointsDiscount, 2);
-                if ($this->paidAmount < $total) {
-                    throw ValidationException::withMessages(['paidAmount' => 'Số tiền thanh toán chưa đủ.']);
-                }
-                $pointsEarned = $customer ? (int) floor($total / 10000) : 0;
-
-                $order = Order::create([
-                    'store_id' => $storeId,
-                    'order_code' => $this->checkoutCode,
-                    'customer_id' => $customer?->id,
-                    'user_id' => auth()->id(),
-                    'order_date' => now(),
-                    'subtotal_amount' => $subtotal,
-                    'discount_amount' => $this->discount + $pointsDiscount,
-                    'manual_discount_amount' => $this->discount,
-                    'points_redeemed' => $pointsRedeemed,
-                    'points_discount_amount' => $pointsDiscount,
-                    'points_earned' => $pointsEarned,
-                    'total_amount' => $total,
-                    'paid_amount' => $this->paidAmount,
-                    'change_amount' => round($this->paidAmount - $total, 2),
-                    'payment_method' => $this->paymentMethod,
-                    'status' => 'completed',
-                    'note' => $this->note,
-                ]);
-
-                usort($items, fn ($a, $b) => $a['product']->id <=> $b['product']->id);
-                foreach ($items as $item) {
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $item['product']->id,
-                        'quantity' => $item['quantity'],
-                        'cost_price' => $item['cost_price'],
-                        'price' => $item['price'],
-                        'subtotal' => $item['subtotal'],
-                    ]);
-
-                    app(InventoryService::class)->adjust(
-                        $storeId,
-                        (int) $item['product']->id,
-                        -$item['quantity'],
-                        'sale',
-                        auth()->id(),
-                        'order',
-                        $order->id,
-                        'Xuất bán theo hóa đơn '.$order->order_code,
-                    );
-                }
-
-                if ($customer) {
-                    if ($pointsRedeemed > 0) {
-                        $before = (int) $customer->point;
-                        $customer->decrement('point', $pointsRedeemed);
-                        CustomerPointTransaction::create([
-                            'store_id' => $storeId,
-                            'customer_id' => $customer->id,
-                            'order_id' => $order->id,
-                            'user_id' => auth()->id(),
-                            'type' => 'redeem',
-                            'points_change' => -$pointsRedeemed,
-                            'points_before' => $before,
-                            'points_after' => $before - $pointsRedeemed,
-                            'note' => 'Dùng điểm tại hóa đơn '.$order->order_code,
-                        ]);
-                        $customer->refresh();
-                    }
-
-                    if ($pointsEarned > 0) {
-                        $before = (int) $customer->point;
-                        $customer->increment('point', $pointsEarned);
-                        CustomerPointTransaction::create([
-                            'store_id' => $storeId,
-                            'customer_id' => $customer->id,
-                            'order_id' => $order->id,
-                            'user_id' => auth()->id(),
-                            'type' => 'earn',
-                            'points_change' => $pointsEarned,
-                            'points_before' => $before,
-                            'points_after' => $before + $pointsEarned,
-                            'note' => 'Tích điểm từ hóa đơn '.$order->order_code,
-                        ]);
-                    }
-                }
-
-                return $order->load(['items.product', 'customer', 'user']);
-            }, 3);
-        } catch (UniqueConstraintViolationException $exception) {
-            $completedOrder = Order::where('store_id', $storeId)->where('user_id', auth()->id())
-                ->where('order_code', $this->checkoutCode)->with(['items.product', 'customer', 'user'])->first();
-            if (! $completedOrder) {
-                throw $exception;
             }
         }
 
@@ -408,6 +269,159 @@ class Cashier extends Component
         $this->lastCompletedOrder = $completedOrder;
         $this->showSuccessModal = true;
         $this->clearCart();
+    }
+
+    private function createOrder(int $storeId): Order
+    {
+        return DB::transaction(function () use ($storeId): Order {
+            $existing = Order::where('store_id', $storeId)->where('user_id', auth()->id())
+                ->where('request_token', $this->requestToken)->first();
+            if ($existing) {
+                return $existing->load(['items.product', 'customer', 'user']);
+            }
+            $productIds = collect($this->cart)->pluck('id')->map(fn ($id) => (int) $id)->unique();
+            $products = Product::where('store_id', $storeId)
+                ->where('status', 1)
+                ->whereIn('id', $productIds)
+                ->get()
+                ->keyBy('id');
+            $items = [];
+
+            foreach ($this->cart as $cartItem) {
+                $product = $products->get((int) ($cartItem['id'] ?? 0));
+                $quantity = filter_var($cartItem['qty'] ?? null, FILTER_VALIDATE_INT);
+                if (! $product || $quantity === false || $quantity < 1 || $quantity > 2147483647) {
+                    throw ValidationException::withMessages(['cart' => 'Sản phẩm trong giỏ không hợp lệ.']);
+                }
+                $items[] = [
+                    'product' => $product,
+                    'quantity' => $quantity,
+                    'price' => (float) $product->sale_price,
+                    'cost_price' => (float) $product->cost_price,
+                    'subtotal' => round($quantity * (float) $product->sale_price, 2),
+                ];
+            }
+
+            $subtotal = array_sum(array_column($items, 'subtotal'));
+            if ($subtotal > 9999999999999.99) {
+                throw ValidationException::withMessages(['cart' => 'Tổng tiền hóa đơn vượt giới hạn.']);
+            }
+            if ($this->discount > $subtotal) {
+                throw ValidationException::withMessages(['discount' => 'Giảm giá vượt tổng tiền hàng.']);
+            }
+
+            $customer = null;
+            if ($this->selectedCustomerId) {
+                $customer = Customer::where('store_id', $storeId)
+                    ->whereKey($this->selectedCustomerId)
+                    ->lockForUpdate()
+                    ->first();
+                if (! $customer) {
+                    throw ValidationException::withMessages(['selectedCustomerId' => 'Khách hàng không hợp lệ.']);
+                }
+            }
+
+            if ($this->usePoints && ! $customer) {
+                throw ValidationException::withMessages(['usePoints' => 'Chọn khách hàng để dùng điểm.']);
+            }
+
+            $pointsRedeemed = $this->usePoints ? $this->pointsToRedeem : 0;
+            $maxPointsByOrder = (int) floor(max(0, $subtotal - $this->discount) / self::POINT_VALUE);
+            if ($pointsRedeemed > (int) ($customer?->point ?? 0)) {
+                throw ValidationException::withMessages(['pointsToRedeem' => 'Khách hàng không đủ điểm.']);
+            }
+            if ($pointsRedeemed > $maxPointsByOrder) {
+                throw ValidationException::withMessages(['pointsToRedeem' => 'Giá trị đổi điểm vượt số tiền cần trả.']);
+            }
+
+            $pointsDiscount = $pointsRedeemed * self::POINT_VALUE;
+            $total = round($subtotal - $this->discount - $pointsDiscount, 2);
+            if ($this->paidAmount < $total) {
+                throw ValidationException::withMessages(['paidAmount' => 'Số tiền thanh toán chưa đủ.']);
+            }
+            $pointsEarned = $customer ? (int) floor($total / 10000) : 0;
+
+            $order = Order::create([
+                'store_id' => $storeId,
+                'order_code' => app(DocumentCodeGenerator::class)->nextOrderCode($storeId, now()),
+                'request_token' => $this->requestToken,
+                'customer_id' => $customer?->id,
+                'user_id' => auth()->id(),
+                'order_date' => now(),
+                'subtotal_amount' => $subtotal,
+                'discount_amount' => $this->discount + $pointsDiscount,
+                'manual_discount_amount' => $this->discount,
+                'points_redeemed' => $pointsRedeemed,
+                'points_discount_amount' => $pointsDiscount,
+                'points_earned' => $pointsEarned,
+                'total_amount' => $total,
+                'paid_amount' => $this->paidAmount,
+                'change_amount' => round($this->paidAmount - $total, 2),
+                'payment_method' => $this->paymentMethod,
+                'status' => 'completed',
+                'note' => $this->note,
+            ]);
+
+            usort($items, fn ($a, $b) => $a['product']->id <=> $b['product']->id);
+            foreach ($items as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item['product']->id,
+                    'quantity' => $item['quantity'],
+                    'cost_price' => $item['cost_price'],
+                    'price' => $item['price'],
+                    'subtotal' => $item['subtotal'],
+                ]);
+
+                app(InventoryService::class)->adjust(
+                    $storeId,
+                    (int) $item['product']->id,
+                    -$item['quantity'],
+                    'sale',
+                    auth()->id(),
+                    'order',
+                    $order->id,
+                    'Xuất bán theo hóa đơn '.$order->order_code,
+                );
+            }
+
+            if ($customer) {
+                if ($pointsRedeemed > 0) {
+                    $before = (int) $customer->point;
+                    $customer->decrement('point', $pointsRedeemed);
+                    CustomerPointTransaction::create([
+                        'store_id' => $storeId,
+                        'customer_id' => $customer->id,
+                        'order_id' => $order->id,
+                        'user_id' => auth()->id(),
+                        'type' => 'redeem',
+                        'points_change' => -$pointsRedeemed,
+                        'points_before' => $before,
+                        'points_after' => $before - $pointsRedeemed,
+                        'note' => 'Dùng điểm tại hóa đơn '.$order->order_code,
+                    ]);
+                    $customer->refresh();
+                }
+
+                if ($pointsEarned > 0) {
+                    $before = (int) $customer->point;
+                    $customer->increment('point', $pointsEarned);
+                    CustomerPointTransaction::create([
+                        'store_id' => $storeId,
+                        'customer_id' => $customer->id,
+                        'order_id' => $order->id,
+                        'user_id' => auth()->id(),
+                        'type' => 'earn',
+                        'points_change' => $pointsEarned,
+                        'points_before' => $before,
+                        'points_after' => $before + $pointsEarned,
+                        'note' => 'Tích điểm từ hóa đơn '.$order->order_code,
+                    ]);
+                }
+            }
+
+            return $order->load(['items.product', 'customer', 'user']);
+        }, 3);
     }
 
     public function closeSuccessModal(): void

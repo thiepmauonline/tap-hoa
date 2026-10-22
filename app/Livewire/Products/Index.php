@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
+use App\Services\DocumentCodeGenerator;
 use App\Services\InventoryService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -144,6 +145,8 @@ class Index extends Component
             $stored = $this->image->store('products', 'public');
             $imagePath = 'storage/'.$stored;
         }
+        // Products without a manufacturer barcode get an in-store code in the same format as the demo data.
+        $barcode = trim($this->barcode) ?: app(DocumentCodeGenerator::class)->nextInternalBarcode((int) $storeId);
 
         if ($this->productId) {
             $product = Product::where('store_id', $storeId)->findOrFail($this->productId);
@@ -151,7 +154,7 @@ class Index extends Component
                 'name' => $this->name,
                 'category_id' => $this->category_id ?: null,
                 'supplier_id' => $this->supplier_id ?: null,
-                'barcode' => $this->barcode ?: null,
+                'barcode' => $barcode,
                 'unit' => $this->unit,
                 'cost_price' => $this->cost_price,
                 'sale_price' => $this->sale_price,
@@ -161,13 +164,13 @@ class Index extends Component
 
             session()->flash('success', 'Đã cập nhật sản phẩm.');
         } else {
-            DB::transaction(function () use ($storeId, $imagePath) {
+            DB::transaction(function () use ($storeId, $imagePath, $barcode) {
                 $product = Product::create([
                     'store_id' => $storeId,
                     'name' => $this->name,
                     'category_id' => $this->category_id ?: null,
                     'supplier_id' => $this->supplier_id ?: null,
-                    'barcode' => $this->barcode ?: null,
+                    'barcode' => $barcode,
                     'unit' => $this->unit,
                     'cost_price' => $this->cost_price,
                     'sale_price' => $this->sale_price,

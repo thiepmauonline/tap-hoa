@@ -11,6 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        .badge-soft-success { background: #dcfce7; color: #15803d; }
+        .badge-soft-danger  { background: #fee2e2; color: #b91c1c; }
+        .badge-soft-secondary { background: #f1f5f9; color: #475569; }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9;

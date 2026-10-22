@@ -43,9 +43,9 @@
                             <td><span class="badge bg-light text-dark border">{{ $p->min_stock ?? 5 }} {{ $p->unit ?? '' }}</span></td>
                             <td>
                                 @if($inv->quantity <= ($p->min_stock ?? 5))
-                                    <span class="badge bg-danger fs-7 px-2.5 py-1"><i class="bi bi-exclamation-triangle me-1"></i> {{ $inv->quantity }} {{ $p->unit ?? '' }} (Sắp hết)</span>
+                                    <span class="badge badge-soft-danger fs-7 px-2.5 py-1" title="Sắp hết hàng"><i class="bi bi-exclamation-triangle me-1"></i> {{ $inv->quantity }} {{ $p->unit ?? '' }}</span>
                                 @else
-                                    <span class="badge bg-success fs-7 px-2.5 py-1">{{ $inv->quantity }} {{ $p->unit ?? '' }}</span>
+                                    <span class="badge badge-soft-success fs-7 px-2.5 py-1">{{ $inv->quantity }} {{ $p->unit ?? '' }}</span>
                                 @endif
                             </td>
                             <td class="text-muted fs-7">{{ $inv->last_imported_at ? $inv->last_imported_at->format('d/m/Y H:i') : '--' }}</td>

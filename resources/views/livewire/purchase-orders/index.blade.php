@@ -31,7 +31,7 @@
                             <td class="fw-semibold text-dark">{{ $po->supplier->name ?? 'Chưa chọn' }}</td>
                             <td>{{ $po->user->name ?? 'User' }}</td>
                             <td class="fw-bold text-danger">{{ number_format($po->total_amount, 0, ',', '.') }} đ</td>
-                            <td><span class="badge bg-success fs-7">Đã nhập kho</span></td>
+                            <td><span class="badge badge-soft-success fs-7">Đã nhập kho</span></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="text-center text-muted py-4">Chưa có phiếu nhập</td></tr>

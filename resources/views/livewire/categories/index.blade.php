@@ -20,7 +20,7 @@
                         <tr>
                             <td class="ps-3 fw-bold text-dark">{{ $cat->name }}</td>
                             <td class="text-muted">{{ $cat->description ?? '--' }}</td>
-                            <td><span class="badge bg-info fs-7">{{ $cat->products_count }} sản phẩm</span></td>
+                            <td><span class="badge badge-soft-info fs-7">{{ $cat->products_count }} sản phẩm</span></td>
                             <td class="text-end pe-3">
                                 <button wire:click="edit({{ $cat->id }})" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Sửa</button>
                                 <button onclick="confirm('Xóa danh mục này?') || event.stopImmediatePropagation()" wire:click="delete({{ $cat->id }})" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Xóa</button>

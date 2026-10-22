@@ -1,13 +1,13 @@
 @php
     $status = match ($purchaseOrder->status) {
-        'draft' => ['label' => 'Nháp', 'class' => 'bg-warning text-dark'],
-        'cancelled' => ['label' => 'Đã hủy', 'class' => 'bg-secondary'],
-        default => ['label' => 'Đã nhập kho', 'class' => 'bg-success'],
+        'draft' => ['label' => 'Nháp', 'class' => 'badge-soft-warning'],
+        'cancelled' => ['label' => 'Đã hủy', 'class' => 'badge-soft-secondary'],
+        default => ['label' => 'Đã nhập kho', 'class' => 'badge-soft-success'],
     };
     $paymentStatus = match ($purchaseOrder->payment_status) {
-        'unpaid' => ['label' => 'Chưa thanh toán', 'class' => 'bg-danger'],
-        'partial' => ['label' => 'Thanh toán một phần', 'class' => 'bg-warning text-dark'],
-        default => ['label' => 'Đã thanh toán', 'class' => 'bg-success'],
+        'unpaid' => ['label' => 'Chưa thanh toán', 'class' => 'badge-soft-danger'],
+        'partial' => ['label' => 'Thanh toán một phần', 'class' => 'badge-soft-warning'],
+        default => ['label' => 'Đã thanh toán', 'class' => 'badge-soft-success'],
     };
     $amountAfterDiscount = max(0, (float) $purchaseOrder->total_amount - (float) $purchaseOrder->discount_amount);
     $debtAmount = max(0, $amountAfterDiscount - (float) $purchaseOrder->paid_amount);

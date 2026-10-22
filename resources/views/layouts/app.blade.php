@@ -137,6 +137,8 @@
         .badge-soft-success { background: #dcfce7; color: #15803d; }
         .badge-soft-warning { background: #fef9c3; color: #a16207; }
         .badge-soft-danger  { background: #fee2e2; color: #b91c1c; }
+        .badge-soft-info    { background: #e0f2fe; color: #0369a1; }
+        .badge-soft-secondary { background: #f1f5f9; color: #475569; }
 
         /* Utility font sizes */
         .fs-7 { font-size: 0.825rem !important; }

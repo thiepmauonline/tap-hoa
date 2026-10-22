@@ -73,9 +73,9 @@
                                 <td>
                                     @php $qty = $p->inventory->quantity ?? 0; @endphp
                                     @if($qty <= $p->min_stock)
-                                        <span class="badge bg-danger fs-7"><i class="bi bi-exclamation-triangle me-1"></i> {{ $qty }} {{ $p->unit }}</span>
+                                        <span class="badge badge-soft-danger fs-7"><i class="bi bi-exclamation-triangle me-1"></i> {{ $qty }} {{ $p->unit }}</span>
                                     @else
-                                        <span class="badge bg-success fs-7">{{ $qty }} {{ $p->unit }}</span>
+                                        <span class="badge badge-soft-success fs-7">{{ $qty }} {{ $p->unit }}</span>
                                     @endif
                                 </td>
                                 <td class="text-end pe-3">
@@ -176,6 +176,7 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold">Mã vạch</label>
                                 <input type="text" wire:model="barcode" class="form-control" placeholder="Quét hoặc nhập mã vạch">
+                                <div class="form-text fs-8">Để trống để hệ thống tự tạo mã vạch nội bộ.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold">Đơn vị tính <span class="text-danger">*</span></label>

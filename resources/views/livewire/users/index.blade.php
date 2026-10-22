@@ -16,10 +16,10 @@
                         <tr>
                             <td class="ps-3 fw-bold">{{ $u->name }}</td>
                             <td>{{ $u->email }}</td><td>{{ $u->phone ?: '—' }}</td>
-                            <td><span class="badge {{ $u->isOwner() ? 'bg-danger' : ($u->role === 'manager' ? 'bg-warning text-dark' : 'bg-primary') }}">
+                            <td><span class="badge {{ $u->isOwner() ? 'badge-soft-danger' : ($u->role === 'manager' ? 'badge-soft-warning' : 'badge-soft-primary') }}">
                                 {{ $u->isOwner() ? 'Chủ cửa hàng' : ($u->role === 'manager' ? 'Quản lý' : 'Thu ngân') }}
                             </span></td>
-                            <td><span class="badge {{ $u->status ? 'bg-success' : 'bg-secondary' }}">{{ $u->status ? 'Hoạt động' : 'Đã khóa' }}</span></td>
+                            <td><span class="badge {{ $u->status ? 'badge-soft-success' : 'badge-soft-secondary' }}">{{ $u->status ? 'Hoạt động' : 'Đã khóa' }}</span></td>
                             <td class="text-end pe-3">
                                 @if(!$u->isOwner())
                                     <button wire:click="edit({{ $u->id }})" class="btn btn-sm btn-outline-primary">Sửa</button>

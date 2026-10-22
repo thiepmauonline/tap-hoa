@@ -50,7 +50,7 @@
                             </div>
                             <div class="mt-2 d-flex justify-content-between align-items-center">
                                 <span class="fw-bold text-primary fs-6">{{ number_format($p->sale_price, 0, ',', '.') }}đ</span>
-                                <span class="badge {{ $qty <= $p->min_stock ? 'bg-danger' : 'bg-secondary' }} fs-8">
+                                <span class="badge {{ $qty <= $p->min_stock ? 'badge-soft-danger' : 'badge-soft-secondary' }} fs-8">
                                     Tồn: {{ $qty }}
                                 </span>
                             </div>

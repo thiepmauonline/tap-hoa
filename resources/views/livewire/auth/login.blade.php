@@ -6,7 +6,7 @@
             <label class="form-label fw-semibold">Email</label>
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope"></i></span>
-                <input type="email" wire:model="email" class="form-control border-start-0 @error('email') is-invalid @enderror" placeholder="admin@taphoa.com" autofocus>
+                <input type="email" wire:model="email" class="form-control border-start-0 @error('email') is-invalid @enderror" placeholder="tranhuyhoang@gmail.com" autofocus>
             </div>
             @error('email') <div class="text-danger fs-7 mt-1">{{ $message }}</div> @enderror
         </div>
